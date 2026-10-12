@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>本地资料助手</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">L</span><div>本地资料助手<small>LOCAL READER</small></div></div>
+    <div class="nav-label">工作空间</div>
+    <nav>
+      <button class="nav active" data-tab="folders"><span>▦</span>资料文件夹<i id="folderBadge">0</i></button>
+      <button class="nav" data-tab="connection"><span>↗</span>连接 ChatGPT</button>
+      <button class="nav" data-tab="activity"><span>≡</span>访问记录</button>
+      <button class="nav" data-tab="guide"><span>?</span>使用指南</button>
+    </nav>
+    <div class="sidebar-bottom"><div class="readonly-pill"><span class="dot"></span>只读访问</div><p>你选择资料范围，<br>ChatGPT 按需读取。</p><small>LOCAL READER · 0.1 BETA</small></div>
+  </aside>
+  <main>
+    <header><div class="breadcrumb">我的电脑 <span>/</span> <b id="breadcrumb">资料文件夹</b></div><div class="header-status"><span class="dot" id="localDot"></span><span id="localStatus">正在启动…</span></div></header>
+    <section class="page" id="foldersPage">
+      <div class="page-heading"><div><p class="eyebrow">YOUR LOCAL KNOWLEDGE</p><h1>让项目资料，随时可读。</h1><p class="subtitle">添加文件夹后，ChatGPT 可以搜索和读取其中的内容。</p></div><button class="primary" id="addFolder"><span>＋</span> 添加文件夹</button></div>
+      <div class="stats"><div><small>资料文件夹</small><strong id="folderCount">0</strong></div><div><small>已开启读取</small><strong id="enabledCount">0</strong></div><div class="connection-stat"><small>ChatGPT 连接</small><strong id="connectionText" class="status-label">待配置</strong></div></div>
+      <div class="list-heading"><h2>允许读取的资料</h2><button class="subtle" id="pauseButton">暂停全部读取</button></div>
+      <div id="pausedNotice" class="notice hidden">读取已暂停。恢复后，已启用的文件夹才会重新开放。</div>
+      <div id="folderList" class="folder-list"></div>
+      <div id="emptyState" class="empty-state"><div class="empty-icon">▱</div><h3>先添加一个资料文件夹</h3><p>可以是代码项目、笔记或工作资料。以后随时添加和移除。</p><button class="secondary" id="addFirst">选择文件夹</button></div>
+      <div class="scope-note"><span class="shield">✓</span><div><b>读取范围由你决定</b><p>工具过滤常见凭据、依赖和构建目录，不提供修改文件或执行命令的能力。</p></div></div>
+    </section>
+    <section class="page hidden" id="connectionPage">
+      <div class="page-heading"><div><p class="eyebrow">CONNECT YOUR WORKSPACE</p><h1>连接 ChatGPT。</h1><p class="subtitle">通过 OpenAI 的安全连接通道，将本地资料提供给聊天。</p></div></div>
+      <div class="connection-card"><div class="connection-symbol">↗</div><div><h2 id="tunnelTitle">尚未配置连接</h2><p id="tunnelDetail">本地读取服务已准备好。完成下面的设置后，可在 ChatGPT 中使用。</p></div><span class="badge" id="tunnelBadge">待配置</span></div>
+      <div class="steps">
+        <article><span class="step-num">01</span><div><h3>创建你的连接通道</h3><p>在 OpenAI 平台创建 Tunnel，并关联要使用的 ChatGPT 工作空间。运行凭据需要 Tunnels Read + Use 权限。</p><button class="text-button" id="openTunnelSettings">打开 Tunnel 设置 ↗</button></div></article>
+        <article><span class="step-num">02</span><div><h3>填写连接信息</h3><p>运行密钥是平台生成的 API key，不是自己设置的密码。输入 Tunnel ID 和运行密钥。密钥可保存在 Mac 钥匙串中，不写入资料文件或访问记录。若浏览器使用代理，请在配置中手动填入自己的 HTTP 代理地址。</p><div class="button-row"><button class="primary" id="configureTunnel">配置连接</button><button class="secondary" id="startTunnel">启动连接</button><button class="subtle" id="stopTunnel">断开连接</button></div><div id="configuredId" class="muted-small"></div></div></article>
+        <article><span class="step-num">03</span><div><h3>在 ChatGPT 中添加插件</h3><p>添加自定义 MCP，连接方式选择 Tunnel，选择或填写上面的 ID，认证明确选择“无需身份验证 / No authentication”，不要选择混合 OAuth 选项。账户权限由 Tunnel 管理，本地令牌由连接客户端携带。安装插件后，在消息中选择它。</p><div class="button-row"><button class="text-button" id="openChatGPT">打开 ChatGPT 插件 ↗</button><button class="text-button" id="copyTunnelId">复制 Tunnel ID</button></div></div></article>
+      </div>
+      <div class="prompt-card"><h2>最后一步：验证实际读取</h2><p>在新的 ChatGPT 聊天中选择插件，请它先调用 server_info 和 list_folders，再读取测试目录中的 README.md。检查访问记录和真实返回内容。仅有通道已连通不代表网页读取成功。</p></div>
+      <div class="notice">账号需具备自定义 MCP 与 Tunnel 权限。电脑和本应用需要保持运行。被读取的内容会发送到 OpenAI；文件原件仍保存在你的电脑上。</div>
+      <details><summary>连接诊断与高级信息</summary><p>本地 MCP 使用独立的访问令牌。官方连接客户端会自动带上令牌；不能把管理页面地址当成网页端连接地址。</p><button class="secondary" id="openTunnelDiagnostics">打开连接诊断</button><p class="muted-small" id="nativeDetails">正在检查连接客户端…</p></details>
+    </section>
+    <section class="page hidden" id="activityPage">
+      <div class="page-heading"><div><p class="eyebrow">ACCESS HISTORY</p><h1>每一次读取，有迹可查。</h1><p class="subtitle">记录访问时间、操作和文件路径；不记录文件正文或密钥。</p></div><button class="secondary" id="refreshAudit">刷新记录</button></div>
+      <div class="audit-wrap"><table><thead><tr><th>时间</th><th>操作</th><th>资料 / 路径</th><th>结果</th></tr></thead><tbody id="auditBody"></tbody></table><div class="table-empty hidden" id="auditEmpty">还没有访问记录。</div></div>
+    </section>
+    <section class="page hidden" id="guidePage">
+      <div class="page-heading"><div><p class="eyebrow">A SIMPLE WORKFLOW</p><h1>资料在本地，分析在 Chat。</h1><p class="subtitle">用 Pro 模型形成方案，再交给 Codex 验证和实施。</p></div></div>
+      <div class="guide-grid"><article><span>1</span><h3>选定资料范围</h3><p>添加项目或工作资料文件夹，并打开读取开关。暂停或移除后，新的读取请求会被拒绝。</p></article><article><span>2</span><h3>在 Chat 中提问</h3><p>选择 Pro 模型和本地资料插件。让 GPT 先列出资料、搜索相关文件，再引用代码和数据分析。</p></article><article><span>3</span><h3>交给 Codex</h3><p>从 Codex 的新聊天打开 Quick Chat，选择已有对话后“添加到 Codex”。入口不可用时复制最终方案到正确的本地项目，让 Codex 先核对再实施。</p></article></div>
+      <div class="prompt-card"><h2>试试这样提问</h2><p id="samplePrompt">请使用本地资料助手，先列出已授权文件夹，再读取目标项目的目录和说明。根据实际代码解释架构，引用文件路径与行号，说明未读取的部分。</p><button class="secondary" id="copyPrompt">复制提问示例</button></div>
+      <div class="formats"><h2>这一版支持什么</h2><p>源码、文本、Markdown、JSON、CSV、日志、可选文本 PDF、Word DOCX / RTF、SQLite 和本地 Git 摘要。</p><p>图片、音视频、扫描版 PDF 的 OCR、Excel 工作簿和其他数据库格式暂不支持；请另行上传或先导出文本。大型文件、搜索扫描和导出均有上限，返回结果会说明截断情况。</p><p>“导出资料”生成经过过滤的 Markdown 快照，方便在连接不可用时手动上传；它不会包含所有格式或保证模型完整阅读每个文件。</p></div>
+    </section>
+    <footer>文件由本地工具读取 · 分析时按需发送 · 原始项目保持只读</footer>
+  </main>
+  <div class="toast hidden" id="toast" role="status"></div>
+  <dialog id="previewDialog"><div class="dialog-header"><h2 id="previewTitle">文件夹预览</h2><button class="icon-button" id="closePreview" aria-label="关闭">×</button></div><p class="muted-small">这里展示允许读取的第一层目录。</p><div id="previewList"></div><div class="dialog-footer"><button class="secondary" id="closePreviewBottom">关闭</button></div></dialog>
+</body>
+</html>
