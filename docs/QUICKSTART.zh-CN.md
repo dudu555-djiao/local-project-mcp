@@ -2,7 +2,7 @@
 
 项目现名“本地项目助手 / Local Project MCP”；当前已发布的 beta.1 安装包和界面仍显示旧名“本地资料助手”，功能相同。本次更名无需重新安装。
 
-本教程适用于 macOS 14 或更新版本、Apple Silicon（M 系列芯片）。点击 Mac 左上角“关于本机”可查看系统与芯片。
+本教程的安装步骤适用于 macOS 14 或更新版本、Apple Silicon（M 系列芯片）。Windows 10 / 11 x64 请使用 [Windows 安装教程](QUICKSTART.windows.zh-CN.md)；Tunnel、运行密钥和 ChatGPT 个人插件的账号端配置相同。
 
 ## 1. 下载并打开
 

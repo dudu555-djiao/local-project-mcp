@@ -7,7 +7,7 @@ const operations={server_info:'连接检查',list_folders:'列出文件夹',list
 function node(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
 function toast(text,error=false){const e=$('toast');e.textContent=text;e.className='toast'+(error?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.add('hidden'),4500);}
 async function api(url,data){const res=await fetch('/api/'+url,{method:data===undefined?'GET':'POST',headers:{'X-LocalReader-Token':token,'Content-Type':'application/json'},...(data===undefined?{}:{body:JSON.stringify(data)})});const out=await res.json();if(!res.ok)throw new Error(out.error || '请求失败');return out;}
-function bridge(action,data={}){if(window.webkit?.messageHandlers?.localReader){window.webkit.messageHandlers.localReader.postMessage({action,...data});return true;}toast('此操作需要在本地项目助手 Mac 应用内使用。',true);return false;}
+function bridge(action,data={}){if(window.localReader){window.localReader.postMessage({action,...data}).catch(()=>toast('本机操作失败，请重新打开软件。',true));return true;}if(window.webkit?.messageHandlers?.localReader){window.webkit.messageHandlers.localReader.postMessage({action,...data});return true;}toast('此操作需要在本地项目助手桌面应用内使用。',true);return false;}
 function button(text,cls,fn){const b=node('button',cls,text);b.addEventListener('click',async()=>{b.disabled=true;try{await fn();}catch(e){toast(e.message,true);}finally{b.disabled=false;}});return b;}
 function showTab(tab){for(const name of Object.keys(tabs))$(name+'Page').classList.toggle('hidden',name!==tab);document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$('breadcrumb').textContent=tabs[tab];if(tab==='activity')refreshAudit();}
 function render(){
@@ -77,4 +77,5 @@ $('copyTunnelId').onclick=()=>native.tunnelId?bridge('copy',{text:native.tunnelI
 $('copyPrompt').onclick=()=>bridge('copy',{text:$('samplePrompt').textContent});$('refreshAudit').onclick=refreshAudit;
 $('closePreview').onclick=$('closePreviewBottom').onclick=()=>$('previewDialog').close();
 $('closeHistory').onclick=$('closeHistoryBottom').onclick=()=>$('historyDialog').close();$('refreshChanges').onclick=refreshChanges;
-refresh();bridge('status');setInterval(()=>{refresh();if(window.webkit?.messageHandlers?.localReader)window.webkit.messageHandlers.localReader.postMessage({action:'status'});},4000);
+if(window.localReader){window.localReader.onEvent(data=>window.nativeEvent(data));document.querySelectorAll('[data-platform-text]').forEach(e=>{e.textContent=e.dataset.platformText;});}
+refresh();bridge('status');setInterval(()=>{refresh();if(window.localReader || window.webkit?.messageHandlers?.localReader)bridge('status');},4000);

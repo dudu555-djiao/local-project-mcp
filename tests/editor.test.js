@@ -84,9 +84,9 @@ test('read_file version drives a preview, atomic byte-verified edit, durable ori
   assert.equal(fs.readFileSync(file(x),'utf8'), expected);
   assert.equal(result.version, sha(Buffer.from(expected)));
   assert.equal((await x.reader.readFile({folderId:x.folder.id,path:'app.js'})).version, result.version);
-  assert.equal(fs.statSync(file(x)).mode & 0o777, 0o640);
+  if(process.platform !== 'win32')assert.equal(fs.statSync(file(x)).mode & 0o777, 0o640);
   const backup = path.join(x.editor.area,'changes',result.changeId,'before.bin');
-  assert.deepEqual(fs.readFileSync(backup), Buffer.from(initial)); assert.equal(fs.statSync(backup).mode & 0o777, 0o600);
+  assert.deepEqual(fs.readFileSync(backup), Buffer.from(initial)); if(process.platform !== 'win32')assert.equal(fs.statSync(backup).mode & 0o777, 0o600);
   const history = x.editor.history(x.folder.id);
   assert.equal(history.changes.length, 1); assert.equal(history.changes[0].canRestore, true); assert.equal(history.backupBytes, Buffer.byteLength(initial));
   assert.ok(x.store.auditRows().some(row => row.tool==='edit_applied'));
@@ -163,7 +163,7 @@ test('symlinks, hardlinks, FIFO files and credential or case-variant Git paths c
   const x=enable(fixture(t));
   fs.symlinkSync(file(x),file(x,'linked.js')); fs.symlinkSync(x.outside,file(x,'linked-dir'));
   fs.writeFileSync(file(x,'original.txt'),'hardlink fixture');fs.linkSync(file(x,'original.txt'),file(x,'hardlink.txt'));
-  execFileSync('/usr/bin/mkfifo',[file(x,'pipe.txt')]);
+  if(process.platform !== 'win32')execFileSync('/usr/bin/mkfifo',[file(x,'pipe.txt')]);
   for(const relative of ['linked.js','linked-dir/outside.txt','hardlink.txt','original.txt','pipe.txt']){
     assert.throws(()=>x.editor.prepare({folderId:x.folder.id,path:relative,operation:'replace',expectedVersion:sha('unused'),edits:[{oldText:'x',newText:'y'}]}));
   }

@@ -1,0 +1,47 @@
+{
+  "name": "local-project-mcp-windows",
+  "version": "0.2.0-beta.2",
+  "private": true,
+  "description": "本地项目助手 Windows desktop host",
+  "author": "Local Project MCP contributors",
+  "license": "MIT",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --win --x64 --dir --publish never",
+    "dist": "electron-builder --win nsis --x64 --publish never",
+    "smoke": "node smoke.cjs"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3",
+    "playwright-core": "1.64.0"
+  },
+  "build": {
+    "appId": "io.localreader.mcp.windows",
+    "productName": "本地项目助手",
+    "artifactName": "LocalProject-${version}-windows-${arch}-setup.${ext}",
+    "directories": {"output": "../dist/windows", "buildResources": "assets"},
+    "files": ["main.cjs", "preload.cjs", "form-preload.cjs", "form.html", "form.js", "host-utils.cjs", "assets/tray.png", "package.json"],
+    "extraResources": [
+      {"from": "../build/windows-service", "to": "service", "filter": ["**/*"]},
+      {"from": "../.cache/windows-runtime", "to": "runtime", "filter": ["**/*"]},
+      {"from": "../docs", "to": "docs", "filter": ["*.md"]},
+      {"from": "../LICENSE", "to": "licenses/LICENSE"},
+      {"from": "../THIRD_PARTY_NOTICES.md", "to": "licenses/THIRD_PARTY_NOTICES.md"}
+    ],
+    "npmRebuild": false,
+    "asar": true,
+    "win": {"target": "nsis", "icon": "assets/icon.ico", "signAndEditExecutable": false},
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
+      "installerLanguages": ["zh_CN", "en_US"]
+    }
+  }
+}

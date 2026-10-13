@@ -12,7 +12,7 @@ Local Project MCP is a local project assistant for reading and opt-in UTF-8 text
 ## Source layout
 
 - `src/`: folder permissions, readers, editing engine, MCP tools and local HTTP service.
-- `native/` and `ui/`: the macOS host and its local management interface.
+- `native/`, `windows/` and `ui/`: macOS / Windows hosts and the shared management interface.
 - `tests/`: synthetic fixtures and Node / Swift checks.
 - `scripts/`: reproducible runtime download, build, release and privacy checks.
 - `docs/`: setup, development, troubleshooting and verified release evidence.
@@ -36,4 +36,4 @@ Local Project MCP is a local project assistant for reading and opt-in UTF-8 text
 
 ## Current release
 
-The source version is `0.2.0-beta.2` (not released as an installer); the latest published installer remains `0.2.0-beta.1`. The public name is 本地项目助手 / Local Project MCP and the repository slug is `local-project-mcp`. Preserve compatibility identifiers: `LocalReaderMCP` app data, `io.localreader.mcp` bundle ID, `io.localreader.mcp.tunnel` Keychain service, `LocalReader` internal executable, and `LOCALREADER_*` environment variables and existing headers. Do not rename them as a cosmetic cleanup. Web editing and native backup restoration were verified on beta.1 with synthetic UTF-8 data; beta.2 checks are recorded separately in `docs/VERIFICATION.md`.
+The source version is `0.2.0-beta.2`, adding a Windows x64 desktop host and NSIS package workflow. The existing Mac installer remains `0.2.0-beta.1`. Check Releases and `docs/VERIFICATION.md` for actual package and validation status. The public name is 本地项目助手 / Local Project MCP. Preserve Mac compatibility identifiers: `LocalReaderMCP` app data, `io.localreader.mcp` bundle ID, `io.localreader.mcp.tunnel` Keychain service, `LocalReader` executable, and `LOCALREADER_*` variables and headers. Windows uses its own `%LOCALAPPDATA%/LocalReaderMCP` profile with DPAPI-encrypted keys. Never import a user's Mac profile into a distributable build. Run the Windows workflow's packaged acceptance before release; its synthetic SDK / UI evidence must not be represented as live ChatGPT Tunnel verification.

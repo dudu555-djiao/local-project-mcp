@@ -2,8 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
+import { defaultDataDir, samePath, containsPath } from './platform.js';
 
-export const dataDir = process.env.LOCALREADER_DATA_DIR || path.join(os.homedir(), 'Library/Application Support/LocalReaderMCP');
+export const dataDir = defaultDataDir();
 export class Store {
   constructor(dir = dataDir) {
     this.dir = dir;
@@ -26,11 +27,11 @@ export class Store {
     if (typeof folderPath !== 'string' || !path.isAbsolute(folderPath)) throw new Error('请选择一个绝对路径文件夹。');
     const root = fs.realpathSync(folderPath);
     if (!fs.statSync(root).isDirectory()) throw new Error('选择的路径不是文件夹。');
-    if (root === '/' || root === os.homedir() || /(^|\/)(\.ssh|\.aws|\.gnupg|\.codex|Keychains)(\/|$)/i.test(root)) throw new Error('请选择具体的资料或项目文件夹，不能选择整块磁盘、用户主目录或凭据目录。');
+    if (samePath(root, path.parse(root).root) || samePath(root, os.homedir()) || /(^|[\\/])(\.ssh|\.aws|\.gnupg|\.codex|Keychains)([\\/]|$)/i.test(root) || (process.platform === 'win32' && root.startsWith('\\\\'))) throw new Error('请选择本机具体的资料或项目文件夹，不能选择整块磁盘、用户主目录、网络共享或凭据目录。');
     const privateDir = fs.realpathSync(this.dir);
-    if (root === privateDir || root.startsWith(privateDir + path.sep) || privateDir.startsWith(root + path.sep)) throw new Error('应用设置和备份目录不能作为项目授权。');
+    if (containsPath(privateDir, root) || containsPath(root, privateDir)) throw new Error('应用设置和备份目录不能作为项目授权。');
     const c = this.load();
-    if (c.folders.some(f => f.path === root)) throw new Error('这个文件夹已经添加。');
+    if (c.folders.some(f => samePath(f.path, root))) throw new Error('这个文件夹已经添加。');
     const folder = { id: crypto.randomUUID().slice(0, 8), name: (name || path.basename(root)).trim().slice(0, 80), path: root, enabled: true, editable: false, editEpoch: crypto.randomUUID(), createdAt: new Date().toISOString() };
     c.folders.push(folder); this.save(c);
     this.audit('folder_added', { folderId: folder.id }, 'ok');
@@ -57,9 +58,9 @@ export class Store {
     if (c.paused) throw new Error('本地读取已暂停，请在本地项目助手中恢复。');
     const f = c.folders.find(f => f.id === id && f.enabled);
     if (!f) throw new Error('文件夹未授权、已停用或已移除。先调用 list_folders 获取可用 ID。');
-    if (fs.realpathSync(f.path) !== f.path) throw new Error('文件夹路径已变化，请移除后重新添加。');
+    if (!samePath(fs.realpathSync(f.path), f.path)) throw new Error('文件夹路径已变化，请移除后重新添加。');
     const privateDir = fs.realpathSync(this.dir);
-    if (f.path === privateDir || f.path.startsWith(privateDir + path.sep) || privateDir.startsWith(f.path + path.sep)) throw new Error('此旧授权包含应用私有设置或备份，已停止访问。请移除后选择具体项目。');
+    if (containsPath(privateDir, f.path) || containsPath(f.path, privateDir)) throw new Error('此旧授权包含应用私有设置或备份，已停止访问。请移除后选择具体项目。');
     return f;
   }
   audit(tool, input = {}, status = 'ok', durationMs = 0, errorCode = '') {

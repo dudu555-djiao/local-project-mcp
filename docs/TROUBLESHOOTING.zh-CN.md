@@ -3,7 +3,9 @@
 | 现象 | 检查和处理 |
 | --- | --- |
 | macOS 不允许打开 | 本版未公证。核对来源及校验值后按系统“隐私与安全性”提示处理；不要关闭系统安全保护。 |
-| Windows 或 Intel Mac 无法使用 | 此安装包只支持 macOS 14+ / Apple Silicon。源码的原生界面和文档提取也依赖 macOS；尚未完成其他平台适配。 |
+| Windows 或 Intel Mac 无法打开 Mac ZIP | Mac 安装包只支持 macOS 14+ / Apple Silicon。Windows 10 / 11 x64 应下载 Windows setup.exe，见 Windows 安装教程；Intel Mac、Windows ARM64 原生安装包尚未提供。 |
+| Windows 安全软件提示未知发布者 | 当前测试包未购买代码签名证书。核对仓库 Releases 和 SHA256，遵守系统及单位策略；不要关闭系统安全保护。 |
+| Windows 保存密钥后在另一账户无法解密 | 密钥绑定原 Windows 用户，需在新账户重新填写自己的运行 key，不能复制他人的加密凭据。 |
 | Tunnel / 自定义 MCP 入口不存在 | 检查账号、组织、目标工作空间是否支持；本软件不能绕过平台权限。可先导出 Markdown 文本快照。 |
 | 运行密钥要自己编密码吗 | 不是。使用 OpenAI 平台生成的独立运行 API key，限 Tunnels Read + Use。 |
 | 为什么要 API key | 官方 Tunnel 客户端需要认证。本软件不调用模型推理 API；不要把它理解为转换订阅额度。 |

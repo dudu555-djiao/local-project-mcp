@@ -50,7 +50,7 @@ test('bounded literal content search returns relevant lines and filters dependen
 test('binary, oversized, and special files cannot be read as source',async t=>{
   const x=await fixture(t);await fs.writeFile(path.join(x.project,'binary.txt'),Buffer.from([65,0,66]));await fs.writeFile(path.join(x.project,'large.log'),Buffer.alloc(2*1024*1024+1,65));
   for(const p of ['binary.txt','large.log'])await assert.rejects(()=>x.reader.readFile({folderId:x.folder.id,path:p}));
-  execFileSync('/usr/bin/mkfifo',[path.join(x.project,'pipe.txt')]);await assert.rejects(()=>x.reader.readFile({folderId:x.folder.id,path:'pipe.txt'}));
+  if(process.platform !== 'win32'){execFileSync('/usr/bin/mkfifo',[path.join(x.project,'pipe.txt')]);await assert.rejects(()=>x.reader.readFile({folderId:x.folder.id,path:'pipe.txt'}));}
 });
 test('SQLite queries are read-only, constrained to tables, paginated, and mask columns',async t=>{
   const x=await fixture(t),p=path.join(x.project,'business.sqlite');
@@ -63,7 +63,7 @@ test('SQLite queries are read-only, constrained to tables, paginated, and mask c
   const after=crypto.createHash('sha256').update(await fs.readFile(p)).digest('hex');assert.equal(before,after);
 });
 test('local Git summary does not modify source or the index',async t=>{
-  const x=await fixture(t);const git=args=>execFileSync('/usr/bin/git',args,{cwd:x.project,env:{...process.env,GIT_CONFIG_GLOBAL:'/dev/null',GIT_CONFIG_SYSTEM:'/dev/null'},stdio:'pipe'});
+  const x=await fixture(t);const git=args=>execFileSync(process.env.LOCALREADER_GIT || 'git',args,{cwd:x.project,env:{...process.env,GIT_CONFIG_GLOBAL:os.devNull,GIT_CONFIG_SYSTEM:os.devNull},stdio:'pipe',windowsHide:true});
   git(['init']);git(['add','README.md']);git(['-c','user.name=Test','-c','user.email=test@example.org','commit','-m','initial']);
   const indexBefore=await fs.readFile(path.join(x.project,'.git/index'));
   const out=await x.reader.gitSummary({folderId:x.folder.id,limit:5});assert.match(out.commits,/initial/);assert.match(out.status,/app.js/);
@@ -72,7 +72,7 @@ test('local Git summary does not modify source or the index',async t=>{
 test('audit never contains file contents or query strings',async t=>{
   const x=await fixture(t);x.store.audit('search_content',{folderId:x.folder.id,path:'app.js',query:'private-value'},'ok',5);
   const log=await fs.readFile(x.store.auditFile,'utf8');assert(!log.includes('private-value'));assert(!log.includes('query'));assert.equal(x.store.auditRows(1)[0].tool,'search_content');
-  assert.equal((await fs.stat(x.store.file)).mode & 0o777,0o600);
+  if(process.platform !== 'win32')assert.equal((await fs.stat(x.store.file)).mode & 0o777,0o600);
 });
 test('export lists omitted files and redacts retained source',async t=>{
   const x=await fixture(t);const out=await x.reader.exportFolder(x.folder.id);assert(out.text.includes('文件：app.js'));assert(!out.text.includes('private-value'));assert(!out.text.includes('APP_SECRET'));assert(out.text.includes('导出时间'));

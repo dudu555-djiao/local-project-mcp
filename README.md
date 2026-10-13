@@ -4,7 +4,9 @@
 
 **[下载安装包](https://github.com/dudu555-djiao/local-project-mcp/releases) · [完整配置教程](docs/QUICKSTART.zh-CN.md) · [常见问题](docs/TROUBLESHOOTING.zh-CN.md) · [隐私说明](PRIVACY.md)**
 
-> 当前已发布安装包为 **0.2.0-beta.1，macOS 14+ / Apple Silicon（M 系列）测试版**。未经过 Apple Developer ID 签名或公证。Windows、Intel Mac 尚无安装包。ChatGPT 网页连接要求你的账号具有自定义 MCP 和 Tunnel 访问权限，购买订阅不保证获得这些入口。没有相应权限时可使用本地预览、导出 Markdown，或接入支持 stdio 的本地 MCP 客户端。
+> Mac 安装包为 **0.2.0-beta.1，macOS 14+ / Apple Silicon（M 系列）**；新增 **0.2.0-beta.2 Windows 10 / 11 x64** 客户端与安装包构建流程。安装包见 Releases，验证范围见[验证记录](docs/VERIFICATION.md)。Mac 版未经过 Apple Developer ID 签名或公证，Windows 版未购买代码签名证书；Intel Mac 和 Windows ARM64 原生安装包尚未提供。ChatGPT 网页连接要求账号具有自定义 MCP 和 Tunnel 权限，购买订阅不保证获得这些入口。
+
+Windows 用户请按 [Windows 中文安装教程](docs/QUICKSTART.windows.zh-CN.md) 下载 `LocalProject-0.2.0-beta.2-windows-x64-setup.exe`；下方拖入“应用程序”的操作适用于 Mac。
 
 ## 快速开始
 
@@ -21,7 +23,7 @@
 
 安装后只使用“应用程序”里的 app。下载目录中解压出的同名副本可移到废纸篓，避免系统搜索出现多个入口；不要清理保存设置和修改备份的 Application Support 目录。
 
-本次仅更新仓库和源码名称，beta.2 安装包尚未发布，现有软件不需要重新安装。以后安装新名称发行包时，退出旧版并只保留“应用程序”里的新版。数据目录、应用标识和钥匙串服务名继续沿用原值，已有授权、设置、备份和已保存的运行密钥可继续使用，无需新建 Tunnel 或密钥。ChatGPT 中的个人插件名称不会随 app 自动改变，可在个人插件设置中手动改名并刷新工具列表。
+beta.2 新增 Windows 客户端，现有 Mac beta.1 安装包保留，Mac 用户无需重新安装。Mac 更名保留原数据目录、应用标识和钥匙串服务名；已有授权、设置、备份和密钥可继续使用。Windows 使用独立的本机数据目录与当前用户加密存储，不导入他人的配置。ChatGPT 中的个人插件名称可在个人插件设置中手动修改并刷新工具列表。
 
 首次配置不需要写代码。[逐步教程](docs/QUICKSTART.zh-CN.md)解释 Tunnel ID、运行密钥、代理和网页插件每个字段。软件不会替你创建账户凭据，也不会调用模型推理 API；Tunnel 服务是否可用及费用以 OpenAI 当时政策为准。
 

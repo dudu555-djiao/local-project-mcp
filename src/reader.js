@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { DatabaseSync } from 'node:sqlite';
+import { validRelative, samePath, containsPath } from './platform.js';
 
 const run = promisify(execFile);
 const EXCLUDE_DIRS = new Set(['node_modules', '.git', '.svn', '.hg', '.ssh', '.aws', '.gnupg', '.codex', '.next', '.nuxt', '.venv', 'venv', '__pycache__', '.cache', 'dist', 'build', 'coverage', 'Keychains']);
@@ -41,10 +42,10 @@ export class Reader {
   constructor(store, { extractor = process.env.LOCALREADER_EXTRACTOR } = {}) { this.store = store; this.extractor = extractor; }
   async resolve(folderId, relative = '') {
     const root = this.store.folder(folderId);
-    if (typeof relative !== 'string' || relative.includes('\0') || path.isAbsolute(relative) || relative.split(/[\\/]/).includes('..')) throw new Error('路径必须是文件夹内的相对路径，不允许 .. 或绝对路径。');
+    if (!validRelative(relative)) throw new Error('路径必须是普通的项目内相对路径，不允许设备名、数据流、.. 或绝对路径。');
     if (denied(relative)) throw new Error('该路径属于凭据、依赖或构建目录，已排除。');
     const target = path.resolve(root.path, relative);
-    if (target !== root.path && !target.startsWith(root.path + path.sep)) throw new Error('路径超出已授权文件夹。');
+    if (!containsPath(root.path, target)) throw new Error('路径超出已授权文件夹。');
     // Refuse symlinks at every component, not only at the final filename.
     let p = root.path;
     for (const part of path.relative(root.path, target).split(path.sep).filter(Boolean)) {
@@ -52,7 +53,7 @@ export class Reader {
       if ((await fs.lstat(p)).isSymbolicLink()) throw new Error('不读取符号链接。请直接添加实际资料所在的文件夹。');
     }
     const real = await fs.realpath(target);
-    if (real !== target) throw new Error('路径发生变化，请重新选择文件夹。');
+    if (!samePath(real, target)) throw new Error('路径发生变化，请重新选择文件夹。');
     return { root, target, stat: await fs.lstat(target) };
   }
   async safeText(folderId, relative) {
@@ -72,6 +73,10 @@ export class Reader {
         meta.version = 'sha256:' + crypto.createHash('sha256').update(buffer).digest('hex');
         try { text = new TextDecoder('utf-8', { fatal: true }).decode(buffer); }
         catch { text = new TextDecoder('gb18030', { fatal: true }).decode(buffer); meta.encoding = 'GB18030'; }
+      } else if (process.platform === 'win32' || process.env.LOCALREADER_PORTABLE_DOCUMENTS === '1') {
+        const { extractDocument } = await import('./documents.js');
+        const extracted = await extractDocument(await handle.readFile(), path.extname(r.target).toLowerCase());
+        text = extracted.text; meta = extracted.meta;
       } else if (path.extname(r.target).toLowerCase() === '.pdf') {
         if (!this.extractor) throw new Error('PDF 提取器未配置。请使用 Mac 应用或先导出文本。');
         const out = await run(this.extractor, ['--extract-pdf', r.target], { timeout: 12000, maxBuffer: MAX_FILE, encoding: 'utf8' });
@@ -158,9 +163,11 @@ export class Reader {
   }
   async gitSummary({ folderId, limit = 10 }) {
     const root = this.store.folder(folderId);
-    const env = { ...process.env, GIT_DIR: path.join(root.path,'.git'), GIT_WORK_TREE: root.path, GIT_OPTIONAL_LOCKS: '0', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null', GIT_TERMINAL_PROMPT: '0', GIT_PAGER: 'cat' };
-    const opts = { cwd: root.path, env, timeout: 5000, maxBuffer: 300000, encoding: 'utf8' };
-    const prefix = ['--no-pager', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', '-c', 'diff.external='];
+    const nullDevice = process.platform === 'win32' ? 'NUL' : '/dev/null';
+    const env = { ...process.env, GIT_DIR: path.join(root.path,'.git'), GIT_WORK_TREE: root.path, GIT_OPTIONAL_LOCKS: '0', GIT_CONFIG_GLOBAL: nullDevice, GIT_CONFIG_SYSTEM: nullDevice, GIT_TERMINAL_PROMPT: '0', GIT_PAGER: 'cat' };
+    const opts = { cwd: root.path, env, timeout: 5000, maxBuffer: 300000, encoding: 'utf8', windowsHide:true };
+    const prefix = ['--no-pager', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath='+nullDevice, '-c', 'diff.external='];
+    const gitBinary = process.env.LOCALREADER_GIT || (process.platform === 'win32' ? 'git.exe' : '/usr/bin/git');
     // Reject worktrees referring to a Git database outside the authorized root.
     const git = await this.resolve(folderId, '');
     const dotgit = await fs.lstat(path.join(git.target, '.git')).catch(() => null);
@@ -169,9 +176,9 @@ export class Reader {
       if (await fs.lstat(path.join(root.path,'.git',p)).catch(()=>null)) throw new Error('Git 仓库引用了外部对象目录，暂不读取。');
     }
     const [status, log, diff] = await Promise.all([
-      run('/usr/bin/git', [...prefix, 'status', '--short', '--untracked-files=normal'], opts),
-      run('/usr/bin/git', [...prefix, 'log', `-${limit}`, '--format=%h %ad %s', '--date=short'], opts).catch(() => ({stdout: '暂无提交记录'})),
-      run('/usr/bin/git', [...prefix, 'diff', '--no-ext-diff', '--no-textconv', '--stat'], opts)
+      run(gitBinary, [...prefix, 'status', '--short', '--untracked-files=normal'], opts),
+      run(gitBinary, [...prefix, 'log', `-${limit}`, '--format=%h %ad %s', '--date=short'], opts).catch(() => ({stdout: '暂无提交记录'})),
+      run(gitBinary, [...prefix, 'diff', '--no-ext-diff', '--no-textconv', '--stat'], opts)
     ]);
     this.store.folder(folderId);
     return { status: redact(status.stdout.slice(0, 16000)), commits: redact(log.stdout.slice(0, 16000)), changeSummary: redact(diff.stdout.slice(0,16000)), note: '只读取本地 Git；未运行外部 diff、fsmonitor 或 hooks。' };

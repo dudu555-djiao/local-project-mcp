@@ -9,7 +9,29 @@
 - scripts/：下载、构建、打包和公开文件检查。
 - docs/：中文安装、配置和排错。
 
-本版主要面向 macOS 14+ / Apple Silicon。源码 CLI 核心使用 Node 24+，PDF / DOCX / RTF 提取依赖 Mac，其他平台未完成验证。
+Mac 原生界面面向 macOS 14+ / Apple Silicon。Windows x64 客户端位于 `windows/`，采用 Electron 隔离渲染器、窄 IPC 桥和独立 Node 24 后端，复用 `ui/` 和 MCP 核心。Windows 文档解析通过独立 worker 完成；Mac PDFKit / textutil 路径保留。平台验证范围见 `VERIFICATION.md`。
+
+## Windows 构建
+
+在 Windows x64、Node 24.16.0、Python 3 环境中执行：
+
+```powershell
+npm ci
+npm test
+python scripts/check-public-files.py
+python scripts/download-windows-runtime.py
+python scripts/prepare-windows-service.py
+npm ci --omit=dev --prefix build/windows-service
+npm ci --prefix windows
+npm run dist --prefix windows
+npm run smoke --prefix windows
+```
+
+输出位于 `dist/windows/`，NSIS 安装包按当前用户安装，无需管理员权限。`.github/workflows/windows.yml` 在 Windows runner 执行相同流程，上传安装包、校验值、教程及合成桌面验收截图；不会读取用户凭据或创建真实 Tunnel。官方 Node / Tunnel / MinGit 固定版本与 SHA256 在下载脚本中明确记录。后端 staging 只复制源码白名单并安装锁定的生产依赖；桌面打包同样使用显式文件白名单。
+
+Windows `%LOCALAPPDATA%\LocalReaderMCP\` 保存授权和备份，密钥使用 Electron safeStorage / Windows DPAPI 加密。界面不能读取已保存的密钥；运行时仅通过子进程环境变量传递，不进入命令行和持久日志。仅本机管理桥能选择文件夹、授权编辑和配置连接，MCP token 无法调用这些操作。打开外部页面限固定官网入口和本机 Tunnel 诊断地址。
+
+Windows 文件路径拒绝 ADS、设备名、尾部点/空格、磁盘根目录、网络共享及 junction / symlink 逃逸；文件版本、备份和提案校验继续由共享编辑核心执行。Windows ACL 与 Mac POSIX 权限不同，不能用 chmod 宣称完成 Windows 私有存储隔离。
 
 ## 构建
 

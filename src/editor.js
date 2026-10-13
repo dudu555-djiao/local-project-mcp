@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { denied, fileKind, redact } from './reader.js';
+import { validRelative, samePath, containsPath } from './platform.js';
 
 const MAX_FILE = 2 * 1024 * 1024, MAX_INPUT = 500_000, TTL = 10 * 60 * 1000;
 export const BACKUP_LIMIT = 200 * 1024 * 1024;
@@ -56,7 +57,7 @@ export class Editor {
       current = path.join(current, part);
       const s = fs.lstatSync(current, {throwIfNoEntry:false});
       if (!s) { if (!allowMissing) throw new Error('父目录不存在。'); missing.push(current); continue; }
-      if (missing.length || !s.isDirectory() || s.isSymbolicLink() || fs.realpathSync(current) !== current) throw new Error('编辑路径包含符号链接或非普通目录。');
+      if (missing.length || !s.isDirectory() || s.isSymbolicLink() || !samePath(fs.realpathSync(current), current)) throw new Error('编辑路径包含符号链接或非普通目录。');
       chain.push({path:current, ...stamp(s)});
     }
     return {chain, missing};
@@ -64,15 +65,15 @@ export class Editor {
   checkParents(chain) {
     for (const p of chain) {
       const s = fs.lstatSync(p.path);
-      if (!s.isDirectory() || s.isSymbolicLink() || s.dev !== p.dev || s.ino !== p.ino || fs.realpathSync(p.path) !== p.path) throw new Error('父目录已经变化，请重新读取并预览。');
+      if (!s.isDirectory() || s.isSymbolicLink() || s.dev !== p.dev || s.ino !== p.ino || !samePath(fs.realpathSync(p.path), p.path)) throw new Error('父目录已经变化，请重新读取并预览。');
     }
   }
   inspect(folderId, relative, {allowMissing = false, requireEdit = true} = {}) {
     const {root, epoch} = requireEdit ? this.grant(folderId) : {root:this.store.folder(folderId),epoch:null};
-    if (typeof relative !== 'string' || !relative || relative.includes('\0') || relative.includes('\\') || path.isAbsolute(relative) || relative.split('/').some(p => !p || p === '.' || p === '..')) throw new Error('编辑路径必须是规范的项目内相对文件路径。');
+    if (!validRelative(relative) || !relative || relative.includes('\\') || relative.split('/').some(p => !p || p === '.' || p === '..')) throw new Error('编辑路径必须是规范的项目内相对文件路径。');
     if (denied(relative) || fileKind(path.basename(relative)) !== 'text') throw new Error('仅编辑源码与文本；凭据、依赖、构建、文档和数据库路径不可编辑。');
     const target = path.join(root.path, relative);
-    if (target === this.privateRoot || target.startsWith(this.privateRoot + path.sep)) throw new Error('不允许编辑应用设置、提案或备份。');
+    if (containsPath(this.privateRoot, target)) throw new Error('不允许编辑应用设置、提案或备份。');
     const {chain, missing} = this.parents(root, relative, allowMissing);
     const s = fs.lstatSync(target, {throwIfNoEntry:false});
     if (!s) {
@@ -241,7 +242,7 @@ export class Editor {
       this.checkParents(s.chain);
       temp = path.join(path.dirname(s.target),'.local-reader-'+crypto.randomUUID()+'.tmp');
       const fd = fs.openSync(temp,fs.constants.O_WRONLY|fs.constants.O_CREAT|fs.constants.O_EXCL|fs.constants.O_NOFOLLOW,s.stat ? s.stat.mode & 0o777 : 0o644);
-      try { fs.writeFileSync(fd,p.nextText,'utf8'); fs.fsyncSync(fd); if (s.stat) fs.fchmodSync(fd,s.stat.mode & 0o777); } finally { fs.closeSync(fd); }
+      try { fs.writeFileSync(fd,p.nextText,'utf8'); fs.fsyncSync(fd); if (s.stat && process.platform !== 'win32') fs.fchmodSync(fd,s.stat.mode & 0o777); } finally { fs.closeSync(fd); }
       // Synchronous validation/commit keeps our HTTP and stdio callbacks from interleaving.
       const final = this.inspect(p.folderId,p.path,{allowMissing:p.operation==='create'});
       if (final.epoch !== p.epoch || final.version !== p.beforeVersion || (p.beforeStat && !sameFile(final.stat,p.beforeStat))) throw new Error('保存前文件或权限发生变化，已停止。');

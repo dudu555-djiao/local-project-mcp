@@ -1,0 +1,65 @@
+name: Windows package
+on:
+  push:
+    branches: [main, 'codex/windows-client']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.16.0'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            windows/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install locked backend dependencies
+        run: npm ci
+      - name: Test Windows backend, paths, document parsing and SDK edits
+        run: npm test
+      - name: Check publishable files
+        run: python scripts/check-public-files.py
+      - name: Download and verify official Windows runtimes
+        run: python scripts/download-windows-runtime.py
+      - name: Stage clean backend
+        run: |
+          python scripts/prepare-windows-service.py
+          npm ci --omit=dev --prefix build/windows-service
+      - name: Install locked desktop build dependencies
+        run: npm ci --prefix windows
+      - name: Build installer
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run dist --prefix windows
+      - name: Exercise packaged Windows desktop and bundled runtimes
+        run: npm run smoke --prefix windows
+      - name: Generate installer checksum and standalone tutorial
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem dist/windows/*-setup.exe
+          if ($installer.Count -ne 1) { throw 'Expected exactly one installer' }
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Set-Content -Encoding ascii dist/windows/SHA256SUMS-windows.txt
+          Copy-Item docs/QUICKSTART.windows.zh-CN.md dist/windows/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          if-no-files-found: error
+          path: |
+            dist/windows/*-setup.exe
+            dist/windows/SHA256SUMS-windows.txt
+            dist/windows/QUICKSTART.windows.zh-CN.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-test-evidence
+          if-no-files-found: ignore
+          path: build/windows-evidence/*.png

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'"><title>配置连接</title>
+<style>body{font:15px 'Microsoft YaHei UI',sans-serif;background:#f5f7f4;color:#20332d;margin:30px}h2{font-size:23px}p{line-height:1.6;color:#59685e}label{display:block;margin:18px 0 7px}input:not([type=checkbox]){box-sizing:border-box;width:100%;padding:10px;border:1px solid #cbd6ca;border-radius:7px;font:inherit}button{padding:10px 22px;border:0;border-radius:8px;font:inherit;cursor:pointer}#save{background:#305d49;color:white}footer{display:flex;justify-content:flex-end;gap:12px;margin-top:24px}.hidden{display:none}#error{color:#a12626;min-height:20px}</style><script src="form.js" defer></script></head>
+<body><h2 id="title">配置 ChatGPT 连接</h2><p id="description">运行密钥只用于官方 Tunnel 认证，本应用不调用模型 API。</p>
+<form id="settings">
+<div id="connectionFields"><label for="tunnelId">Tunnel ID</label><input id="tunnelId" autocomplete="off" placeholder="tunnel_…">
+<label for="runtimeKey">运行密钥（已保存时留空可继续使用）</label><input id="runtimeKey" type="password" autocomplete="off" placeholder="sk-…">
+<label><input id="rememberKey" type="checkbox"> 使用 Windows 当前用户加密保存运行密钥</label>
+<label for="organization">组织 ID（可选）</label><input id="organization" autocomplete="off" placeholder="org-…">
+<label for="proxy">HTTPS 代理地址（可选，填写 HTTP 代理 URL）</label><input id="proxy" autocomplete="off" placeholder="例如 http://127.0.0.1:7897"></div>
+<div id="renameFields" class="hidden"><label for="name">文件夹显示名称</label><input id="name" maxlength="80"></div>
+<p id="error" role="alert"></p><footer><button id="cancel" type="button">取消</button><button id="save" type="submit">保存设置</button></footer>
+</form></body></html>

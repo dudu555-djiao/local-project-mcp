@@ -1,0 +1,101 @@
+// Runs only against a packaged build and a new synthetic profile on Windows CI.
+const { _electron } = require('playwright-core');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const os = require('node:os');
+const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
+
+(async () => {
+  const root = path.resolve(__dirname,'..'), unpacked = path.join(root,'dist','windows','win-unpacked');
+  const temporary = await fs.mkdtemp(path.join(os.tmpdir(),'local-reader-windows-smoke-'));
+  const profile = path.join(temporary,'profile'), project = path.join(temporary,'中文 project');
+  const evidence = path.join(root,'build','windows-evidence');
+  await fs.mkdir(project); await fs.mkdir(evidence,{recursive:true});
+  await fs.writeFile(path.join(project,'README.md'),'# Windows synthetic fixture\n演示按钮：提交\n');
+  const { documentFixtures } = await import('../tests/document-fixtures.js');
+  for (const [name,bytes] of Object.entries(await documentFixtures())) await fs.writeFile(path.join(project,name),bytes);
+  const runtime = path.join(unpacked,'resources','runtime');
+  assert.match(execFileSync(path.join(runtime,'node.exe'),['--version'],{encoding:'utf8'}),/v24\.16\.0/);
+  assert.match(execFileSync(path.join(runtime,'git','cmd','git.exe'),['--version'],{encoding:'utf8'}),/git version/);
+  execFileSync(path.join(runtime,'tunnel-client.exe'),['help','quickstart'],{stdio:'pipe',timeout:10000});
+  let desktop,client;
+  try {
+    desktop = await _electron.launch({executablePath:path.join(unpacked,'本地项目助手.exe'),env:{...process.env,LOCALREADER_DATA_DIR:profile},timeout:30000});
+    const page = await desktop.firstWindow();
+    await page.waitForURL('http://127.0.0.1:*/**');
+    await page.locator('#localStatus').filter({hasText:'本地服务运行中'}).waitFor();
+    assert.equal(await page.evaluate(() => typeof window.require),'undefined');
+    assert.equal(await page.evaluate(() => window.localReader.platform),'windows');
+    await desktop.evaluate(({dialog},folder) => {dialog.showOpenDialog = async () => ({canceled:false,filePaths:[folder]});},project);
+    await page.locator('#addFolder').click();
+    await page.locator('.folder-name').filter({hasText:'中文 project'}).waitFor();
+    let state = await page.evaluate(() => api('state'));
+    const folder = state.folders[0]; assert.equal(folder.editable,false);
+    assert.equal(state.folders.length,1);
+    await page.locator('.folder-card').getByRole('button',{name:'预览',exact:true}).click();
+    await page.locator('#previewList').filter({hasText:'README.md'}).waitFor();
+    await page.locator('#closePreviewBottom').click();
+    await desktop.evaluate(({dialog}) => {dialog.showMessageBox = async () => ({response:1});});
+    await page.getByRole('button',{name:'允许编辑',exact:true}).click();
+    assert.equal((await page.evaluate(() => api('state'))).folders[0].editable,false);
+    await desktop.evaluate(({dialog}) => {dialog.showMessageBox = async () => ({response:0});});
+    await page.getByRole('button',{name:'允许编辑',exact:true}).click();
+    await page.getByRole('button',{name:'关闭编辑',exact:true}).waitFor();
+    const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
+    const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
+    client = new Client({name:'packaged-windows-acceptance',version:'1.0'});
+    const transport = new StdioClientTransport({command:path.join(runtime,'node.exe'),args:[path.join(unpacked,'resources','service','src','server.js'),'--stdio'],env:{...process.env,LOCALREADER_DATA_DIR:profile,LOCALREADER_GIT:path.join(runtime,'git','cmd','git.exe')},stderr:'pipe'});
+    await client.connect(transport);
+    assert.equal((await client.listTools()).tools.length,13);
+    const call = async (name,args) => {
+      const out = await client.callTool({name,arguments:args});
+      assert.notEqual(out.isError,true,JSON.stringify(out)); return out.structuredContent;
+    };
+    assert.equal((await call('list_folders',{})).folders[0].id,folder.id);
+    const before = await call('read_file',{folderId:folder.id,path:'README.md'});
+    const proposal = await call('prepare_edit',{folderId:folder.id,path:'README.md',operation:'replace',expectedVersion:before.version,edits:[{oldText:'演示按钮：提交',newText:'演示按钮：确认提交'}]});
+    assert.equal((await call('apply_edit',{proposalId:proposal.proposalId})).verified,true);
+    assert.match(await fs.readFile(path.join(project,'README.md'),'utf8'),/确认提交/);
+    await page.locator('.folder-card').getByRole('button',{name:'修改历史',exact:true}).click();
+    await page.getByRole('button',{name:'恢复到修改前',exact:true}).click();
+    await page.locator('#toast').filter({hasText:'文件已恢复'}).waitFor();
+    assert.match(await fs.readFile(path.join(project,'README.md'),'utf8'),/演示按钮：提交/);
+    await page.locator('#closeHistoryBottom').click();
+    for (const [name,expected] of [['sample.pdf',/Windows PDF text fixture/],['sample.docx',/中文 Word/],['sample.rtf',/Unicode 中文/]]) {
+      assert.match((await call('read_file',{folderId:folder.id,path:name})).content,expected);
+    }
+    const git = args => execFileSync(path.join(runtime,'git','cmd','git.exe'),args,{cwd:project,stdio:'pipe'});
+    git(['init']); git(['add','README.md']); git(['-c','user.name=Test','-c','user.email=test@example.org','commit','-m','synthetic acceptance']);
+    assert.match((await call('git_summary',{folderId:folder.id})).commits,/synthetic acceptance/);
+    const exported = path.join(temporary,'export.md');
+    await desktop.evaluate(({dialog},file) => {dialog.showSaveDialog = async () => ({canceled:false,filePath:file});},exported);
+    await page.locator('.folder-card').getByRole('button',{name:'导出',exact:true}).click();
+    await page.locator('#toast').filter({hasText:'资料已导出'}).waitFor();
+    assert.match(await fs.readFile(exported,'utf8'),/Windows synthetic fixture/);
+    await page.screenshot({path:path.join(evidence,'windows-folders.png')});
+    await page.locator('[data-tab="connection"]').click();
+    const formPromise = desktop.waitForEvent('window');
+    await page.locator('#configureTunnel').click(); const form = await formPromise;
+    await form.locator('#tunnelId').fill('tunnel_synthetic-example');
+    const syntheticKey = 'sk-' + 'demo'.repeat(10);
+    await form.locator('#runtimeKey').fill(syntheticKey);
+    await form.locator('#rememberKey').check();
+    await form.locator('#save').click();
+    await form.waitForEvent('close');
+    assert.ok(!(await fs.readFile(path.join(profile,'runtime-key.dat'))).includes(Buffer.from(syntheticKey)));
+    assert.ok(!(await fs.readFile(path.join(profile,'connection.json'),'utf8')).includes(syntheticKey));
+    await page.screenshot({path:path.join(evidence,'windows-connection.png')});
+    await page.locator('[data-tab="folders"]').click(); await page.locator('#pauseButton').click();
+    assert.deepEqual((await call('list_folders',{})).folders,[]);
+    await page.locator('#pauseButton').click();
+    await page.locator('.folder-card').getByRole('button',{name:'移除',exact:true}).click();
+    await page.locator('#emptyState').waitFor({state:'visible'});
+    assert.deepEqual((await call('list_folders',{})).folders,[]);
+    console.log('Packaged Windows acceptance passed: UI authorization, 13 tools, edit/restore, PDF/DOCX/RTF, bundled Git, export, pause/remove, DPAPI key storage. No OpenAI credential or live Tunnel was used.');
+  } finally {
+    if (client) await client.close();
+    if (desktop) await desktop.close();
+    await fs.rm(temporary,{recursive:true,force:true,maxRetries:5,retryDelay:500});
+  }
+})().catch(error => {console.error(error);process.exitCode = 1;});
