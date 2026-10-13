@@ -22,7 +22,7 @@
     "productName": "本地项目助手",
     "artifactName": "LocalProject-${version}-windows-${arch}-setup.${ext}",
     "directories": {"output": "../dist/windows", "buildResources": "assets"},
-    "files": ["main.cjs", "preload.cjs", "form-preload.cjs", "form.html", "form.js", "host-utils.cjs", "assets/tray.png", "package.json"],
+    "files": ["main.cjs", "preload.cjs", "form-preload.cjs", "form.html", "form.js", "host-utils.cjs", "assets/tray.png", "assets/icon.ico", "package.json"],
     "extraResources": [
       {"from": "../build/windows-service", "to": "service", "filter": ["**/*"]},
       {"from": "../.cache/windows-runtime", "to": "runtime", "filter": ["**/*"]},

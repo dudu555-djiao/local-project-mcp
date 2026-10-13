@@ -41,7 +41,7 @@ function jsonSave(file, data) {
 export class Editor {
   constructor(store, {now = () => Date.now()} = {}) {
     this.store = store; this.now = now; this.sessionId = crypto.randomUUID();
-    this.privateRoot = fs.realpathSync(store.dir);
+    this.privateRoot = fs.realpathSync.native(store.dir);
     this.area = path.join(this.privateRoot, 'editing');
     for (const d of [this.area, this.area+'/proposals', this.area+'/changes', this.area+'/locks']) privateDirectory(d);
   }
@@ -57,7 +57,7 @@ export class Editor {
       current = path.join(current, part);
       const s = fs.lstatSync(current, {throwIfNoEntry:false});
       if (!s) { if (!allowMissing) throw new Error('父目录不存在。'); missing.push(current); continue; }
-      if (missing.length || !s.isDirectory() || s.isSymbolicLink() || !samePath(fs.realpathSync(current), current)) throw new Error('编辑路径包含符号链接或非普通目录。');
+      if (missing.length || !s.isDirectory() || s.isSymbolicLink() || !samePath(fs.realpathSync.native(current), current)) throw new Error('编辑路径包含符号链接或非普通目录。');
       chain.push({path:current, ...stamp(s)});
     }
     return {chain, missing};
@@ -65,7 +65,7 @@ export class Editor {
   checkParents(chain) {
     for (const p of chain) {
       const s = fs.lstatSync(p.path);
-      if (!s.isDirectory() || s.isSymbolicLink() || s.dev !== p.dev || s.ino !== p.ino || !samePath(fs.realpathSync(p.path), p.path)) throw new Error('父目录已经变化，请重新读取并预览。');
+      if (!s.isDirectory() || s.isSymbolicLink() || s.dev !== p.dev || s.ino !== p.ino || !samePath(fs.realpathSync.native(p.path), p.path)) throw new Error('父目录已经变化，请重新读取并预览。');
     }
   }
   inspect(folderId, relative, {allowMissing = false, requireEdit = true} = {}) {
@@ -121,7 +121,7 @@ export class Editor {
     if (operation === 'create') {
       if (s.version !== 'missing') throw new Error('文件已经存在；create 不会覆盖已有文件。');
       if (typeof content !== 'string' || content.length > MAX_INPUT || edits !== undefined || marker.test(content)) throw new Error('新建文件需要 content，不能含脱敏占位符，也不能同时提供 edits。');
-      return this.proposal(s,folderId,relative,content,operation,{content:redact(content).slice(0,24000),truncated:content.length>24000,createsDirectories:s.missing.map(p=>path.relative(s.root.path,p))});
+      return this.proposal(s,folderId,relative,content,operation,{content:redact(content).slice(0,24000),truncated:content.length>24000,createsDirectories:s.missing.map(p=>path.relative(s.root.path,p).split(path.sep).join('/'))});
     }
     if (expectedVersion !== s.version) throw new Error('文件版本不一致。请先 read_file 获取最新 version，再生成预览。');
     if (content !== undefined || !Array.isArray(edits) || !edits.length || edits.length > 20) throw new Error('replace 需要 1–20 个精确旧新片段 edits，不接受整文件 content。');

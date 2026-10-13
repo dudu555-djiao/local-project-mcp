@@ -23,7 +23,7 @@ function fixture(t){
 function failRename(destination,occurrence,action){
   const realRename=fs.renameSync;let matches=0;
   fs.renameSync=(from,to)=>{
-    if(String(to)===destination&&++matches===occurrence){const error=new Error('synthetic storage full');error.code='ENOSPC';throw error;}
+    if(path.normalize(String(to))===path.normalize(destination)&&++matches===occurrence){const error=new Error('synthetic storage full');error.code='ENOSPC';throw error;}
     return realRename(from,to);
   };
   try{return{result:action(),get matches(){return matches;}};}

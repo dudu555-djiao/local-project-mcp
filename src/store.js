@@ -25,10 +25,10 @@ export class Store {
   }
   add(folderPath, name) {
     if (typeof folderPath !== 'string' || !path.isAbsolute(folderPath)) throw new Error('请选择一个绝对路径文件夹。');
-    const root = fs.realpathSync(folderPath);
+    const root = fs.realpathSync.native(folderPath);
     if (!fs.statSync(root).isDirectory()) throw new Error('选择的路径不是文件夹。');
     if (samePath(root, path.parse(root).root) || samePath(root, os.homedir()) || /(^|[\\/])(\.ssh|\.aws|\.gnupg|\.codex|Keychains)([\\/]|$)/i.test(root) || (process.platform === 'win32' && root.startsWith('\\\\'))) throw new Error('请选择本机具体的资料或项目文件夹，不能选择整块磁盘、用户主目录、网络共享或凭据目录。');
-    const privateDir = fs.realpathSync(this.dir);
+    const privateDir = fs.realpathSync.native(this.dir);
     if (containsPath(privateDir, root) || containsPath(root, privateDir)) throw new Error('应用设置和备份目录不能作为项目授权。');
     const c = this.load();
     if (c.folders.some(f => samePath(f.path, root))) throw new Error('这个文件夹已经添加。');
@@ -58,8 +58,8 @@ export class Store {
     if (c.paused) throw new Error('本地读取已暂停，请在本地项目助手中恢复。');
     const f = c.folders.find(f => f.id === id && f.enabled);
     if (!f) throw new Error('文件夹未授权、已停用或已移除。先调用 list_folders 获取可用 ID。');
-    if (!samePath(fs.realpathSync(f.path), f.path)) throw new Error('文件夹路径已变化，请移除后重新添加。');
-    const privateDir = fs.realpathSync(this.dir);
+    if (!samePath(fs.realpathSync.native(f.path), f.path)) throw new Error('文件夹路径已变化，请移除后重新添加。');
+    const privateDir = fs.realpathSync.native(this.dir);
     if (containsPath(privateDir, f.path) || containsPath(f.path, privateDir)) throw new Error('此旧授权包含应用私有设置或备份，已停止访问。请移除后选择具体项目。');
     return f;
   }
