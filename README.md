@@ -1,6 +1,6 @@
 # 本地项目助手 · Local Project MCP
 
-让 ChatGPT 按需搜索和读取你主动授权的本地项目与资料，并在你为具体文件夹开启编辑后直接修改文本文件。Mac 原生管理窗口、菜单栏常驻、MCP 和 OpenAI Secure MCP Tunnel 集成。
+让 ChatGPT 按需搜索和读取你主动授权的本地项目与资料，并在你为具体文件夹开启编辑后直接修改文本文件。提供 Mac 原生窗口和 Windows 桌面客户端，支持菜单栏 / 系统托盘常驻、MCP 和 OpenAI Secure MCP Tunnel。
 
 **[下载安装包](https://github.com/dudu555-djiao/local-project-mcp/releases) · [完整配置教程](docs/QUICKSTART.zh-CN.md) · [常见问题](docs/TROUBLESHOOTING.zh-CN.md) · [隐私说明](PRIVACY.md)**
 
@@ -74,7 +74,7 @@ OpenAI Secure MCP Tunnel 用于私有连接，目前不能直接用于公开插�
 
 ChatGPT 中写入工具默认需要确认；具体提示以客户端设置为准。**开启文件夹编辑是持续授权，不是每次修改都弹出本地审批窗口。**软件在本机执行文件操作，不调用 Codex，也不会自行运行测试、安装依赖、提交 Git 或部署。
 
-文档提取依赖 macOS PDFKit / textutil。图片、音视频、扫描 PDF 的 OCR、Excel、MySQL / PostgreSQL 暂不支持。大型文件和目录有返回上限，不保证每个文件都被完整阅读，具体见 [开发说明](docs/DEVELOPMENT.md)。
+Mac 文档提取使用 PDFKit / textutil；Windows 使用独立的 PDF.js、DOCX XML 和 RTF 解析器，复杂文档的提取顺序和换行可能不同。图片、音视频、扫描 PDF 的 OCR、Excel、MySQL / PostgreSQL 暂不支持。大型文件和目录有返回上限，不保证每个文件都被完整阅读，具体见 [开发说明](docs/DEVELOPMENT.md)。
 
 凭据文件、常见依赖与构建目录被排除，常见密钥和个人标识做尽力脱敏。**这不是完整匿名化**；请先选择适合发送给模型的资料范围。[隐私与数据边界](PRIVACY.md)
 

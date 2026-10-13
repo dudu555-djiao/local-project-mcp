@@ -7,8 +7,13 @@ const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 
 (async () => {
-  const root = path.resolve(__dirname,'..'), unpacked = path.join(root,'dist','windows','win-unpacked');
+  const root = path.resolve(__dirname,'..'), releaseDir = path.join(root,'dist','windows');
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(),'local-reader-windows-smoke-'));
+  const unpacked = path.join(temporary,'installed-app');
+  const installers = (await fs.readdir(releaseDir)).filter(name => name.endsWith('-setup.exe'));
+  assert.equal(installers.length,1);
+  execFileSync(path.join(releaseDir,installers[0]),['/S','/D='+unpacked],{windowsHide:true,stdio:'pipe',timeout:120000});
+  assert.ok((await fs.stat(path.join(unpacked,'本地项目助手.exe'))).isFile());
   const profile = path.join(temporary,'profile'), project = path.join(temporary,'中文 project');
   const evidence = path.join(root,'build','windows-evidence');
   await fs.mkdir(project); await fs.mkdir(evidence,{recursive:true});
@@ -99,6 +104,8 @@ const { execFileSync } = require('node:child_process');
   } finally {
     if (client) await client.close();
     if (desktop) await desktop.close();
+    const uninstaller = (await fs.readdir(unpacked)).find(name => /^Uninstall.*\.exe$/i.test(name));
+    if (uninstaller) execFileSync(path.join(unpacked,uninstaller),['/S'],{windowsHide:true,stdio:'pipe',timeout:120000});
     await fs.rm(temporary,{recursive:true,force:true,maxRetries:5,retryDelay:500});
   }
 })().catch(error => {console.error(error);process.exitCode = 1;});
