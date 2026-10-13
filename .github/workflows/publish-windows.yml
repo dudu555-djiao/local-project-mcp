@@ -1,0 +1,65 @@
+name: Publish verified Windows installer
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Windows package workflow run ID
+        required: true
+      source_sha:
+        description: Exact tested source commit
+        required: true
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: ${{ inputs.run_id }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source build succeeded in this repository
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          run_id = os.environ['SOURCE_RUN']
+          sha = os.environ['SOURCE_SHA']
+          if not run_id.isdigit() or not re.fullmatch(r'[0-9a-f]{40}', sha):
+              raise SystemExit('Invalid source build identity')
+          run = json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{run_id}"]))
+          if run['name'] != 'Windows package' or run['conclusion'] != 'success' or run['head_sha'] != sha:
+              raise SystemExit('Only the exact successful Windows package build can be published')
+          print('Verified successful source build:', sha)
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: release-assets
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run_id }}
+      - name: Verify checksum and publish the three allowlisted release assets
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, re, subprocess
+          from pathlib import Path
+          version = json.loads(Path('windows/package.json').read_text())['version']
+          installer = f'LocalProject-{version}-windows-x64-setup.exe'
+          allowed = {installer, 'SHA256SUMS-windows.txt', 'QUICKSTART.windows.zh-CN.md'}
+          folder = Path('release-assets')
+          if {str(p.relative_to(folder)) for p in folder.rglob('*') if p.is_file()} != allowed:
+              raise SystemExit('Unexpected artifact publication scope')
+          checksum, filename = (folder / 'SHA256SUMS-windows.txt').read_text().strip().split()
+          if filename != installer or not re.fullmatch(r'[0-9a-f]{64}', checksum):
+              raise SystemExit('Invalid installer checksum manifest')
+          digest = hashlib.file_digest((folder / installer).open('rb'), 'sha256').hexdigest()
+          if digest != checksum:
+              raise SystemExit('Installer checksum mismatch')
+          notes = Path('windows/RELEASE.md').read_text()
+          notes += f"\n构建源码：`{os.environ['SOURCE_SHA']}`。\n构建与安装验收：https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['SOURCE_RUN']}\n"
+          Path('release-notes.md').write_text(notes)
+          subprocess.run(['gh','release','create','v'+version,'--target',os.environ['SOURCE_SHA'],'--title','本地项目助手 '+version+' · Windows x64 测试版','--prerelease','--notes-file','release-notes.md',*[str(folder/name) for name in sorted(allowed)]],check=True)
+          print('Published verified Windows installer; SHA256:', digest)
+          PY
