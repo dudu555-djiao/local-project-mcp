@@ -39,15 +39,15 @@ cat > "$app/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIdentifier</key><string>io.localreader.mcp</string>
 <key>CFBundleExecutable</key><string>LocalReader</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.1.0</string>
-<key>CFBundleVersion</key><string>1</string>
+<key>CFBundleShortVersionString</key><string>0.2.0</string>
+<key>CFBundleVersion</key><string>2</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
-<key>NSDocumentsFolderUsageDescription</key><string>读取你主动添加的项目或资料文件夹。</string>
-<key>NSDownloadsFolderUsageDescription</key><string>读取你主动添加的下载资料。</string>
-<key>NSDesktopFolderUsageDescription</key><string>读取你主动添加的桌面资料。</string>
+<key>NSDocumentsFolderUsageDescription</key><string>访问你主动添加的项目或资料文件夹；编辑需要另外开启。</string>
+<key>NSDownloadsFolderUsageDescription</key><string>访问你主动添加的下载资料；编辑需要另外开启。</string>
+<key>NSDesktopFolderUsageDescription</key><string>访问你主动添加的桌面资料；编辑需要另外开启。</string>
 </dict></plist>
 PLIST
 for binary in node tunnel-client cloudflared; do codesign --force --sign - "$app/Contents/Resources/bin/$binary"; done

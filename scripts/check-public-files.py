@@ -6,7 +6,7 @@ from pathlib import Path
 import re, subprocess
 root=Path(__file__).resolve().parents[1]
 try:
- paths=[root / p for p in subprocess.check_output(['git','ls-files','-z'],cwd=root,stderr=subprocess.DEVNULL).decode().split('\0') if p]
+ paths=[root / p for p in subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z'],cwd=root,stderr=subprocess.DEVNULL).decode().split('\0') if p]
 except subprocess.CalledProcessError:
  paths=[]
 if not paths:
@@ -15,7 +15,7 @@ patterns=[('API credential',re.compile(rb'(?:sk-(?:proj-|svcacct-)?|ghp_|gho_|gi
  ('real-looking Tunnel ID',re.compile(rb'tunnel_[a-f0-9]{32}')),
  ('local user path',re.compile(rb'/Users/(?!your-user(?:/|$)|example(?:/|$))[A-Za-z0-9_.-]+/')),
  ('private key',re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'))]
-forbidden={'settings.json','connection.json','tunnel-health.url','access.jsonl','.DS_Store'}
+forbidden={'settings.json','connection.json','tunnel-health.url','access.jsonl','before.bin','.DS_Store'}
 errors=[]
 for p in paths:
  rel=str(p.relative_to(root))

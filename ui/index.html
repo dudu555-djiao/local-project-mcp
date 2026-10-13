@@ -11,44 +11,45 @@
       <button class="nav" data-tab="activity"><span>≡</span>访问记录</button>
       <button class="nav" data-tab="guide"><span>?</span>使用指南</button>
     </nav>
-    <div class="sidebar-bottom"><div class="readonly-pill"><span class="dot"></span>只读访问</div><p>你选择资料范围，<br>ChatGPT 按需读取。</p><small>LOCAL READER · 0.1 BETA</small></div>
+    <div class="sidebar-bottom"><div class="readonly-pill"><span class="dot"></span><span id="accessMode">默认只读访问</span></div><p>你选择资料范围，<br>ChatGPT 按需读取与编辑。</p><small>LOCAL READER · 0.2 BETA</small></div>
   </aside>
   <main>
     <header><div class="breadcrumb">我的电脑 <span>/</span> <b id="breadcrumb">资料文件夹</b></div><div class="header-status"><span class="dot" id="localDot"></span><span id="localStatus">正在启动…</span></div></header>
     <section class="page" id="foldersPage">
-      <div class="page-heading"><div><p class="eyebrow">YOUR LOCAL KNOWLEDGE</p><h1>让项目资料，随时可读。</h1><p class="subtitle">添加文件夹后，ChatGPT 可以搜索和读取其中的内容。</p></div><button class="primary" id="addFolder"><span>＋</span> 添加文件夹</button></div>
-      <div class="stats"><div><small>资料文件夹</small><strong id="folderCount">0</strong></div><div><small>已开启读取</small><strong id="enabledCount">0</strong></div><div class="connection-stat"><small>ChatGPT 连接</small><strong id="connectionText" class="status-label">待配置</strong></div></div>
-      <div class="list-heading"><h2>允许读取的资料</h2><button class="subtle" id="pauseButton">暂停全部读取</button></div>
-      <div id="pausedNotice" class="notice hidden">读取已暂停。恢复后，已启用的文件夹才会重新开放。</div>
+      <div class="page-heading"><div><p class="eyebrow">YOUR LOCAL WORKSPACE</p><h1>让项目资料，可读可改。</h1><p class="subtitle">添加文件夹后默认只读。按项目允许编辑后，ChatGPT 可预览并应用具体修改。</p></div><button class="primary" id="addFolder"><span>＋</span> 添加文件夹</button></div>
+      <div class="stats"><div><small>资料文件夹</small><strong id="folderCount">0</strong></div><div><small>已开启访问</small><strong id="enabledCount">0</strong></div><div class="connection-stat"><small>ChatGPT 连接</small><strong id="connectionText" class="status-label">待配置</strong></div></div>
+      <div class="list-heading"><h2>已授权的项目与资料</h2><button class="subtle" id="pauseButton">暂停全部访问</button></div>
+      <div id="pausedNotice" class="notice hidden">访问已暂停。所有读取、修改和恢复请求都会被拒绝；恢复后，已启用的文件夹才会重新开放。</div>
       <div id="folderList" class="folder-list"></div>
       <div id="emptyState" class="empty-state"><div class="empty-icon">▱</div><h3>先添加一个资料文件夹</h3><p>可以是代码项目、笔记或工作资料。以后随时添加和移除。</p><button class="secondary" id="addFirst">选择文件夹</button></div>
-      <div class="scope-note"><span class="shield">✓</span><div><b>读取范围由你决定</b><p>工具过滤常见凭据、依赖和构建目录，不提供修改文件或执行命令的能力。</p></div></div>
+      <div class="scope-note"><span class="shield">✓</span><div><b>读取与编辑范围由你决定</b><p>工具过滤常见凭据、依赖和构建目录。编辑需要单独授权，写入前先生成预览并保留本地备份；本版不运行任意终端命令或 SQL。</p></div></div>
     </section>
     <section class="page hidden" id="connectionPage">
       <div class="page-heading"><div><p class="eyebrow">CONNECT YOUR WORKSPACE</p><h1>连接 ChatGPT。</h1><p class="subtitle">通过 OpenAI 的安全连接通道，将本地资料提供给聊天。</p></div></div>
-      <div class="connection-card"><div class="connection-symbol">↗</div><div><h2 id="tunnelTitle">尚未配置连接</h2><p id="tunnelDetail">本地读取服务已准备好。完成下面的设置后，可在 ChatGPT 中使用。</p></div><span class="badge" id="tunnelBadge">待配置</span></div>
+      <div class="connection-card"><div class="connection-symbol">↗</div><div><h2 id="tunnelTitle">尚未配置连接</h2><p id="tunnelDetail">本地资料服务已准备好。完成下面的设置后，可在 ChatGPT 中使用。</p></div><span class="badge" id="tunnelBadge">待配置</span></div>
       <div class="steps">
         <article><span class="step-num">01</span><div><h3>创建你的连接通道</h3><p>在 OpenAI 平台创建 Tunnel，并关联要使用的 ChatGPT 工作空间。运行凭据需要 Tunnels Read + Use 权限。</p><button class="text-button" id="openTunnelSettings">打开 Tunnel 设置 ↗</button></div></article>
         <article><span class="step-num">02</span><div><h3>填写连接信息</h3><p>运行密钥是平台生成的 API key，不是自己设置的密码。输入 Tunnel ID 和运行密钥。密钥可保存在 Mac 钥匙串中，不写入资料文件或访问记录。若浏览器使用代理，请在配置中手动填入自己的 HTTP 代理地址。</p><div class="button-row"><button class="primary" id="configureTunnel">配置连接</button><button class="secondary" id="startTunnel">启动连接</button><button class="subtle" id="stopTunnel">断开连接</button></div><div id="configuredId" class="muted-small"></div></div></article>
-        <article><span class="step-num">03</span><div><h3>在 ChatGPT 中添加插件</h3><p>添加自定义 MCP，连接方式选择 Tunnel，选择或填写上面的 ID，认证明确选择“无需身份验证 / No authentication”，不要选择混合 OAuth 选项。账户权限由 Tunnel 管理，本地令牌由连接客户端携带。安装插件后，在消息中选择它。</p><div class="button-row"><button class="text-button" id="openChatGPT">打开 ChatGPT 插件 ↗</button><button class="text-button" id="copyTunnelId">复制 Tunnel ID</button></div></div></article>
+        <article><span class="step-num">03</span><div><h3>在 ChatGPT 中添加插件</h3><p>添加自定义 MCP，连接方式选择 Tunnel，选择或填写上面的 ID，认证明确选择“无需身份验证 / No authentication”，不要选择混合 OAuth 选项。账户权限由 Tunnel 管理，本地令牌由连接客户端携带。安装插件后，在消息中选择它。升级本助手后，请在插件设置中刷新工具列表，确认出现 prepare_edit 和 apply_edit。</p><div class="button-row"><button class="text-button" id="openChatGPT">打开 ChatGPT 插件 ↗</button><button class="text-button" id="copyTunnelId">复制 Tunnel ID</button></div></div></article>
       </div>
       <div class="prompt-card"><h2>最后一步：验证实际读取</h2><p>在新的 ChatGPT 聊天中选择插件，请它先调用 server_info 和 list_folders，再读取测试目录中的 README.md。检查访问记录和真实返回内容。仅有通道已连通不代表网页读取成功。</p></div>
       <div class="notice">账号需具备自定义 MCP 与 Tunnel 权限。电脑和本应用需要保持运行。被读取的内容会发送到 OpenAI；文件原件仍保存在你的电脑上。</div>
       <details><summary>连接诊断与高级信息</summary><p>本地 MCP 使用独立的访问令牌。官方连接客户端会自动带上令牌；不能把管理页面地址当成网页端连接地址。</p><button class="secondary" id="openTunnelDiagnostics">打开连接诊断</button><p class="muted-small" id="nativeDetails">正在检查连接客户端…</p></details>
     </section>
     <section class="page hidden" id="activityPage">
-      <div class="page-heading"><div><p class="eyebrow">ACCESS HISTORY</p><h1>每一次读取，有迹可查。</h1><p class="subtitle">记录访问时间、操作和文件路径；不记录文件正文或密钥。</p></div><button class="secondary" id="refreshAudit">刷新记录</button></div>
+      <div class="page-heading"><div><p class="eyebrow">ACCESS HISTORY</p><h1>每一次访问与修改，有迹可查。</h1><p class="subtitle">记录访问时间、操作和文件路径；不记录文件正文或密钥。</p></div><button class="secondary" id="refreshAudit">刷新记录</button></div>
       <div class="audit-wrap"><table><thead><tr><th>时间</th><th>操作</th><th>资料 / 路径</th><th>结果</th></tr></thead><tbody id="auditBody"></tbody></table><div class="table-empty hidden" id="auditEmpty">还没有访问记录。</div></div>
     </section>
     <section class="page hidden" id="guidePage">
-      <div class="page-heading"><div><p class="eyebrow">A SIMPLE WORKFLOW</p><h1>资料在本地，分析在 Chat。</h1><p class="subtitle">用 Pro 模型形成方案，再交给 Codex 验证和实施。</p></div></div>
-      <div class="guide-grid"><article><span>1</span><h3>选定资料范围</h3><p>添加项目或工作资料文件夹，并打开读取开关。暂停或移除后，新的读取请求会被拒绝。</p></article><article><span>2</span><h3>在 Chat 中提问</h3><p>选择 Pro 模型和本地资料插件。让 GPT 先列出资料、搜索相关文件，再引用代码和数据分析。</p></article><article><span>3</span><h3>交给 Codex</h3><p>从 Codex 的新聊天打开 Quick Chat，选择已有对话后“添加到 Codex”。入口不可用时复制最终方案到正确的本地项目，让 Codex 先核对再实施。</p></article></div>
-      <div class="prompt-card"><h2>试试这样提问</h2><p id="samplePrompt">请使用本地资料助手，先列出已授权文件夹，再读取目标项目的目录和说明。根据实际代码解释架构，引用文件路径与行号，说明未读取的部分。</p><button class="secondary" id="copyPrompt">复制提问示例</button></div>
-      <div class="formats"><h2>这一版支持什么</h2><p>源码、文本、Markdown、JSON、CSV、日志、可选文本 PDF、Word DOCX / RTF、SQLite 和本地 Git 摘要。</p><p>图片、音视频、扫描版 PDF 的 OCR、Excel 工作簿和其他数据库格式暂不支持；请另行上传或先导出文本。大型文件、搜索扫描和导出均有上限，返回结果会说明截断情况。</p><p>“导出资料”生成经过过滤的 Markdown 快照，方便在连接不可用时手动上传；它不会包含所有格式或保证模型完整阅读每个文件。</p></div>
+      <div class="page-heading"><div><p class="eyebrow">A SIMPLE WORKFLOW</p><h1>资料在本地，读写在 Chat。</h1><p class="subtitle">网页端 GPT 可调用编辑工具直接修改已授权项目，无需再交给 Codex 执行。</p></div></div>
+      <div class="guide-grid"><article><span>1</span><h3>按项目允许编辑</h3><p>添加项目并打开访问开关。点击“允许编辑”，在 Mac 确认窗口核对项目路径。新添加的文件夹始终默认只读。</p></article><article><span>2</span><h3>读取并预览修改</h3><p>在 ChatGPT 中选择本地资料插件。让 GPT 先读文件，再调用 prepare_edit 生成具体修改预览，核对路径与差异。</p></article><article><span>3</span><h3>应用并读回验证</h3><p>确认修改后，让 GPT 调用 apply_edit 写入本机，再读回检查结果。文件已变化时会拒绝应用，需重新读取和预览。</p></article></div>
+      <div class="prompt-card"><h2>试试这样提问</h2><p id="samplePrompt">请使用本地资料助手，先调用 server_info 和 list_folders，读取目标项目的相关文件。针对我的需求调用 prepare_edit，并展示修改路径、预览差异与 proposalId。等我确认后调用 apply_edit，再读回文件验证。若项目未允许编辑或文件发生冲突，停止写入并说明原因。</p><button class="secondary" id="copyPrompt">复制提问示例</button></div>
+      <div class="formats"><h2>编辑与恢复</h2><p>支持 UTF-8 文本和源码的局部替换、新建文件。读取内容可能已脱敏，不能将脱敏后的全文覆盖回原文件。PDF、Word、RTF、SQLite 仍只读；本版不提供删除文件、任意终端执行或 SQL 写入。</p><p>每次应用修改都会记录结果，并把修改前内容保存在本机私有备份目录。点击项目的“修改历史”可查看和确认恢复；新建文件没有旧内容，本版不通过恢复删除文件。备份含原始内容，请保留并保护本机账户；达到备份上限后会拒绝继续修改。</p><p>暂停、停用或移除项目会阻止新的访问与修改，不能撤回已经传给 ChatGPT 的内容。关闭窗口仍在菜单栏运行，退出应用或电脑休眠后连接停止。</p><h2>这一版支持读取什么</h2><p>源码、文本、Markdown、JSON、CSV、日志、可选文本 PDF、Word DOCX / RTF、SQLite 和本地 Git 摘要。</p><p>图片、音视频、扫描版 PDF 的 OCR、Excel 工作簿和其他数据库格式暂不支持；请另行上传或先导出文本。大型文件、搜索扫描和导出均有上限，返回结果会说明截断情况。</p><p>“导出资料”生成经过过滤的 Markdown 快照，方便在连接不可用时手动上传；它不会包含所有格式或保证模型完整阅读每个文件。</p></div>
     </section>
-    <footer>文件由本地工具读取 · 分析时按需发送 · 原始项目保持只读</footer>
+    <footer>默认只读 · 按项目授权编辑 · 先预览，再应用并验证</footer>
   </main>
   <div class="toast hidden" id="toast" role="status"></div>
   <dialog id="previewDialog"><div class="dialog-header"><h2 id="previewTitle">文件夹预览</h2><button class="icon-button" id="closePreview" aria-label="关闭">×</button></div><p class="muted-small">这里展示允许读取的第一层目录。</p><div id="previewList"></div><div class="dialog-footer"><button class="secondary" id="closePreviewBottom">关闭</button></div></dialog>
+  <dialog id="historyDialog"><div class="dialog-header"><h2 id="historyTitle">修改历史</h2><button class="icon-button" id="closeHistory" aria-label="关闭">×</button></div><p class="muted-small">备份仅保存在本机，包含修改前的原始内容。恢复会替换当前内容，并检查版本冲突；新建文件没有旧内容，本版不删除文件。</p><p class="muted-small" id="backupUsage"></p><div id="historyList"></div><div class="dialog-footer"><button class="subtle" id="refreshChanges">刷新历史</button><button class="secondary" id="closeHistoryBottom">关闭</button></div></dialog>
 </body>
 </html>

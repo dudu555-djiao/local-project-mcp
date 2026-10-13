@@ -14,6 +14,6 @@ cp docs/*.md "$stage/docs/"
 cp LICENSE PRIVACY.md THIRD_PARTY_NOTICES.md CONTRIBUTING.md SECURITY.md CHANGELOG.md "$stage/"
 find "$stage" -name .DS_Store -delete
 # Avoid resource forks, quarantine metadata, and incidental Finder attributes in the archive.
-COPYFILE_DISABLE=1 /usr/bin/ditto -c -k --norsrc --noextattr --noqtn "$stage" dist/LocalReader-0.1.0-beta.1-macos-arm64.zip
-(cd dist && shasum -a 256 LocalReader-0.1.0-beta.1-macos-arm64.zip > SHA256SUMS.txt)
-echo 'Packaged dist/LocalReader-0.1.0-beta.1-macos-arm64.zip'
+COPYFILE_DISABLE=1 /usr/bin/ditto -c -k --norsrc --noextattr --noqtn "$stage" dist/LocalReader-0.2.0-beta.1-macos-arm64.zip
+(cd dist && shasum -a 256 LocalReader-0.2.0-beta.1-macos-arm64.zip > SHA256SUMS.txt)
+echo 'Packaged dist/LocalReader-0.2.0-beta.1-macos-arm64.zip'

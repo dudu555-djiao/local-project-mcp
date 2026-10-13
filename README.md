@@ -1,15 +1,15 @@
 # 本地资料助手 · Local Reader MCP
 
-让 ChatGPT 按需搜索和读取你主动授权的本地项目与资料。Mac 原生管理窗口、菜单栏常驻、只读 MCP 和 OpenAI Secure MCP Tunnel 集成。
+让 ChatGPT 按需搜索和读取你主动授权的本地项目与资料，并在你为具体文件夹开启编辑后直接修改文本文件。Mac 原生管理窗口、菜单栏常驻、MCP 和 OpenAI Secure MCP Tunnel 集成。
 
 **[下载安装包](https://github.com/dudu555-djiao/local-reader-mcp/releases) · [完整配置教程](docs/QUICKSTART.zh-CN.md) · [常见问题](docs/TROUBLESHOOTING.zh-CN.md) · [隐私说明](PRIVACY.md)**
 
-> 当前发布为 **0.1.0-beta.1，macOS 14+ / Apple Silicon（M 系列）测试版**。未经过 Apple Developer ID 签名或公证。Windows、Intel Mac 尚无安装包。ChatGPT 网页连接要求你的账号具有自定义 MCP 和 Tunnel 访问权限，购买订阅不保证获得这些入口。没有相应权限时可使用本地预览、导出 Markdown，或接入支持 stdio 的本地 MCP 客户端。
+> 当前版本为 **0.2.0-beta.1，macOS 14+ / Apple Silicon（M 系列）测试版**。未经过 Apple Developer ID 签名或公证。Windows、Intel Mac 尚无安装包。ChatGPT 网页连接要求你的账号具有自定义 MCP 和 Tunnel 访问权限，购买订阅不保证获得这些入口。没有相应权限时可使用本地预览、导出 Markdown，或接入支持 stdio 的本地 MCP 客户端。
 
 ## 快速开始
 
-1. 从 **Releases** 下载 `LocalReader-0.1.0-beta.1-macos-arm64.zip`，解压后把“本地资料助手.app”拖入“应用程序”。解压目录有离线中文教程；Release 另提供 SHA256 校验文件。
-2. 打开软件，点击 **添加文件夹**。首次安装没有任何预授权目录，选择你愿意提供给模型的资料。
+1. 从 **Releases** 下载 `LocalReader-0.2.0-beta.1-macos-arm64.zip`，解压后把“本地资料助手.app”拖入“应用程序”。解压目录有离线中文教程；Release 另提供 SHA256 校验文件。
+2. 打开软件，点击 **添加文件夹**。首次安装没有任何预授权目录；新加文件夹及从旧版升级的文件夹默认只读，编辑需要逐个开启。
 3. 点击 **连接 ChatGPT**，按向导创建自己的 Tunnel、生成只含 Tunnels Read + Use 权限的运行 API key，填入本机配置窗口。需要代理时填入自己的 HTTP 代理地址。
 4. 点击 **启动连接**。再去 ChatGPT 插件页面创建自定义 MCP，连接方式选 **Tunnel / 隧道**，身份验证明确选择 **No authentication / 无需身份验证**。
 5. 安装并在聊天中选择插件，发送下面的验证提示词。
@@ -21,14 +21,17 @@
 
 首次配置不需要写代码。[逐步教程](docs/QUICKSTART.zh-CN.md)解释 Tunnel ID、运行密钥、代理和网页插件每个字段。软件不会替你创建账户凭据，也不会调用模型推理 API；Tunnel 服务是否可用及费用以 OpenAI 当时政策为准。
 
+读取验证成功后，在本地为测试文件夹开启 **允许编辑**，让 ChatGPT 先调用 `prepare_edit` 返回修改预览，再调用 `apply_edit` 应用提案。升级后需要在 ChatGPT 刷新插件工具列表；旧聊天未显示新工具时新建聊天。完整步骤及恢复方法见[编辑教程](docs/QUICKSTART.zh-CN.md#8-开启编辑并完成第一次修改)。
+
 ## 使用场景
 
 - 让 ChatGPT 搜索真实源码、解释架构、分析日志并引用相对路径和行号。
 - 同时管理多个项目，以后添加文件夹无需重建 MCP。
-- 使用 Chat 中可用的模型形成方案，再将方案交给本地 Codex 核对和实施。
+- 在已开启编辑的项目内，让网页 ChatGPT 生成具体修改、预览后调用本机工具保存代码，不需要 Codex 再解释一遍方案。
+- 也可以继续只读分析，再将方案交给本地 Codex 核对、测试和实施。
 - 连接不可用时，手动导出经过过滤、有范围说明的 Markdown 文本快照。
 
-整个项目不会一次性上传。模型通过工具按问题读取；**被读取的内容会发送给 OpenAI，文件原件仍在你的电脑上**。只读限制不等于内容不会外传。
+整个项目不会一次性上传。模型通过工具按问题读取；**工具返回的内容会发送给 OpenAI，原文件保存在你的电脑上，确认应用编辑后原文件会被修改**。只读限制不等于内容不会外传。
 
 ## 结构
 
@@ -36,7 +39,7 @@
 ChatGPT → 每位用户自己的 OpenAI Tunnel
         → 该用户电脑上的 Tunnel 客户端
         → 仅监听 127.0.0.1 的 MCP 服务
-        → 本地手动授权的文件夹
+        → 本地手动授权的文件夹（默认只读，逐个选择允许编辑）
 ```
 
 共享的是软件，不是连接信息。不要把某个用户的 Tunnel、API key、文件夹设置或已注册插件技术 ID 写入公共配置。
@@ -54,10 +57,20 @@ OpenAI Secure MCP Tunnel 用于私有连接，目前不能直接用于公开插�
 | read_file | 分页读取文本、可选文本 PDF、DOCX / RTF |
 | git_summary | 本地独立 Git 仓库状态、提交与差异统计 |
 | database_schema / database_rows | SQLite 普通表结构与过滤后的分页样例 |
+| prepare_edit | 为新建文本文件或精确文本替换生成差异预览与 10 分钟有效的 proposalId |
+| apply_edit | 校验权限、路径和文件版本后，应用指定提案并返回结果 |
+| list_changes | 查看本软件记录的编辑和恢复记录 |
+| prepare_restore | 从某次修改的本地备份生成恢复预览，再由 apply_edit 应用 |
 
-不提供文件修改、删除、任意命令或任意 SQL 工具。文档提取依赖 macOS PDFKit / textutil。图片、音视频、扫描 PDF 的 OCR、Excel、MySQL / PostgreSQL 暂不支持。大型文件和目录有返回上限，不保证每个文件都被完整阅读，具体见 [开发说明](docs/DEVELOPMENT.md)。
+编辑限于最多 2 MiB 的 UTF-8 源码和文本文件；单次请求文本总量最多 50 万字符，局部替换最多 20 处。新建文件可创建必要子目录；不提供整文件覆盖、删除、移动、任意命令或任意 SQL。PDF、DOCX、数据库、凭据文件、符号链接和硬链接不能编辑。替换必须使用最近一次 `read_file` 返回的 `version`（SHA256）；提案过期、服务重启、权限变化或检测到原文件变化时，应用会拒绝写入，必须重新预览。请避免多个编辑器或 Agent 同时保存同一个文件，文件检查不替代操作系统沙箱或跨程序的协同编辑。
+
+ChatGPT 中写入工具默认需要确认；具体提示以客户端设置为准。**开启文件夹编辑是持续授权，不是每次修改都弹出本地审批窗口。**软件在本机执行文件操作，不调用 Codex，也不会自行运行测试、安装依赖、提交 Git 或部署。
+
+文档提取依赖 macOS PDFKit / textutil。图片、音视频、扫描 PDF 的 OCR、Excel、MySQL / PostgreSQL 暂不支持。大型文件和目录有返回上限，不保证每个文件都被完整阅读，具体见 [开发说明](docs/DEVELOPMENT.md)。
 
 凭据文件、常见依赖与构建目录被排除，常见密钥和个人标识做尽力脱敏。**这不是完整匿名化**；请先选择适合发送给模型的资料范围。[隐私与数据边界](PRIVACY.md)
+
+读取结果可能包含脱敏占位文字。请让模型使用原文可见部分做精确局部替换，不能把读取结果当作原文件全文覆盖回去；匹配到被隐藏区域或将脱敏占位文字写回文件的编辑会被拒绝。备份保存在本机私有 Application Support 目录中，不放进项目或公开发行包；备份累计上限 200 MiB，满时拒绝新的写入，不自动清理。内容恢复只适用于修改前已有的文件；新建文件不自动删除撤销。
 
 ## 后台运行
 

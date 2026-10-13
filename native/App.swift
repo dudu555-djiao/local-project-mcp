@@ -71,7 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         item = NSStatusBar.system.statusItem(withLength:NSStatusItem.squareLength)
         item.button?.image=NSImage(systemSymbolName:"folder.badge.gearshape",accessibilityDescription:"本地资料助手")
         let menu=NSMenu();menu.addItem(withTitle:"打开本地资料助手",action:#selector(showWindow),keyEquivalent:"").target=self
-        menu.addItem(withTitle:"暂停 / 恢复读取",action:#selector(togglePause),keyEquivalent:"").target=self
+        menu.addItem(withTitle:"暂停 / 恢复全部访问",action:#selector(togglePause),keyEquivalent:"").target=self
         menu.addItem(NSMenuItem.separator());menu.addItem(withTitle:"退出",action:#selector(quit),keyEquivalent:"q").target=self;item.menu=menu
         let mainMenu=NSMenu(), appMenu=NSMenu(), root=NSMenuItem();root.submenu=appMenu
         appMenu.addItem(withTitle:"关于本地资料助手",action:#selector(about),keyEquivalent:"").target=self
@@ -87,7 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
     }
     @objc func showWindow(){window?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)}
     @objc func quit(){NSApp.terminate(nil)}
-    @objc func about(){let a=NSAlert();a.messageText="本地资料助手 0.1.0-beta.1";a.informativeText="通用只读资料 MCP。\n文件夹授权、搜索、文档读取、访问记录和 OpenAI Tunnel 连接。\n关闭窗口后仍在菜单栏运行；退出会停止连接。";a.runModal()}
+    @objc func about(){let a=NSAlert();a.messageText="本地资料助手 0.2.0-beta.1";a.informativeText="默认只读，按项目授权编辑的资料 MCP。\n支持搜索、文档读取、修改预览、文件编辑、本地备份恢复和 OpenAI Tunnel 连接。\n关闭窗口后仍在菜单栏运行；退出会停止连接。";a.runModal()}
     func windowShouldClose(_ sender:NSWindow)->Bool{sender.orderOut(nil);return false}
     func applicationShouldTerminateAfterLastWindowClosed(_ sender:NSApplication)->Bool{return false}
     func applicationWillTerminate(_ notification:Notification){quitting=true;healthTimer?.invalidate();stopTunnel();backend?.terminate();if let b=backend,b.isRunning { b.waitUntilExit() }}
@@ -129,7 +129,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         let output=Pipe(),errors=Pipe();backendPipe=output;backendErrorPipe=errors;p.standardOutput=output;p.standardError=errors
         output.fileHandleForReading.readabilityHandler={[weak self]h in let d=h.availableData;if d.isEmpty{return};DispatchQueue.main.async{self?.processBackendOutput(d)}}
         errors.fileHandleForReading.readabilityHandler={h in _=h.availableData}
-        p.terminationHandler={[weak self]_ in DispatchQueue.main.async{guard let self=self,!self.quitting else{return};self.detail="本地读取服务意外停止。请退出并重新打开应用。";self.toast(self.detail,error:true)}}
+        p.terminationHandler={[weak self]_ in DispatchQueue.main.async{guard let self=self,!self.quitting else{return};self.detail="本地资料服务意外停止。请退出并重新打开应用。";self.toast(self.detail,error:true)}}
         do{try p.run()}catch{let a=NSAlert();a.messageText="本地服务无法启动";a.informativeText=error.localizedDescription;a.runModal();NSApp.terminate(nil)}
     }
     func processBackendOutput(_ d:Data){
@@ -171,6 +171,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
             guard let id=b["id"] as? String,let name=b["name"] as? String else{return}
             let a=NSAlert();a.messageText="重命名资料";a.informativeText="只修改显示名称，原始文件夹保持不变。";a.addButton(withTitle:"保存");a.addButton(withTitle:"取消");let field=NSTextField(string:name);field.frame=NSRect(x:0,y:0,width:300,height:28);a.accessoryView=field
             a.beginSheetModal(for:window){[weak self]r in if r == .alertFirstButtonReturn{self?.send(["type":"rename","id":id,"name":field.stringValue])}}
+        case "setEditing":
+            if let id=b["id"] as? String,let editable=b["editable"] as? Bool{setEditing(id,editable:editable)}
+        case "restoreChange":
+            if let id=b["id"] as? String,let changeID=b["changeId"] as? String{restoreChange(id,changeID:changeID)}
         case "exportFolder":if let id=b["id"] as? String{exportFolder(id)}
         case "configureTunnel":configureTunnel()
         case "startTunnel":startTunnel()
@@ -182,6 +186,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         case "openDiagnostics":if let u=healthURL{NSWorkspace.shared.open(u.appendingPathComponent("ui"))}else{toast("连接启动后，才会提供诊断页面。")}
         case "copy":if let s=b["text"] as? String,s.count<10000{NSPasteboard.general.clearContents();NSPasteboard.general.setString(s,forType:.string);toast("已复制。")}
         default:break
+        }
+    }
+    func setEditing(_ id:String,editable:Bool){
+        if !editable{send(["type":"editing","id":id,"editable":false]);return}
+        // Read the real local folder record rather than trusting a display name
+        // or path supplied by the page message.
+        api("state"){[weak self]out,error in
+            guard let self=self else{return}
+            if let error=error{self.toast(error,error:true);return}
+            guard let folder=(out?["folders"] as? [[String:Any]])?.first(where:{$0["id"] as? String==id}),let name=folder["name"] as? String,let path=folder["path"] as? String else{self.toast("项目已移除，请刷新列表。",error:true);return}
+            let a=NSAlert();a.alertStyle = .warning;a.messageText="允许 ChatGPT 编辑这个项目？"
+            a.informativeText="\(name)\n\(path)\n\n开启后，网页端 ChatGPT 可以通过本助手创建或修改此目录内允许访问的 UTF-8 文本和源码。每次修改须先生成预览，再调用应用工具；ChatGPT 的写入确认由其自身设置控制。\n\n修改前内容会保存在本机备份中。你可以随时关闭编辑、停用项目或暂停全部访问。本版不执行任意终端命令、SQL 或删除文件。"
+            a.addButton(withTitle:"允许编辑");a.addButton(withTitle:"取消");a.buttons[0].keyEquivalent="";a.buttons[1].keyEquivalent="\r"
+            a.beginSheetModal(for:self.window){[weak self]r in if r == .alertFirstButtonReturn{self?.send(["type":"editing","id":id,"editable":true])}}
+        }
+    }
+    func restoreChange(_ id:String,changeID:String){
+        api("state"){[weak self]state,error in
+            guard let self=self else{return}
+            if let error=error{self.toast(error,error:true);return}
+            guard let folder=(state?["folders"] as? [[String:Any]])?.first(where:{$0["id"] as? String==id}),let name=folder["name"] as? String,folder["editable"] as? Bool==true,folder["enabled"] as? Bool==true,state?["paused"] as? Bool != true else{self.toast("请先恢复访问并允许此项目编辑。",error:true);return}
+            self.api("changes",data:["id":id]){[weak self]out,error in
+                guard let self=self else{return}
+                if let error=error{self.toast(error,error:true);return}
+                guard let change=(out?["changes"] as? [[String:Any]])?.first(where:{$0["id"] as? String==changeID}),let path=change["path"] as? String,change["canRestore"] as? Bool==true else{self.toast("此记录没有可恢复的旧内容；新建文件不会被删除。",error:true);return}
+                let a=NSAlert();a.alertStyle = .warning;a.messageText="恢复到这次修改前？";a.informativeText="\(name)\n\(path)\n\n本助手会用本机备份替换这个文件的当前内容，并保留新的恢复记录。文件版本不匹配时会拒绝恢复，请先核对当前内容。"
+                a.addButton(withTitle:"恢复文件");a.addButton(withTitle:"取消");a.buttons[0].keyEquivalent="";a.buttons[1].keyEquivalent="\r"
+                a.beginSheetModal(for:self.window){[weak self]r in
+                    guard let self=self,r == .alertFirstButtonReturn else{return}
+                    self.api("restore",data:["id":id,"changeId":changeID]){[weak self]_,error in
+                        guard let self=self else{return};if let error=error{self.toast(error,error:true);return}
+                        self.toast("文件已恢复，并保留恢复记录。");self.send(["type":"restored","id":id])
+                    }
+                }
+            }
         }
     }
     func exportFolder(_ id:String){

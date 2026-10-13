@@ -81,7 +81,7 @@ test('redaction covers API credentials, JWTs and common personal identifiers',()
   const secret='sk-proj-'+ 'a'.repeat(25);const out=redact(`api_key = "${secret}"\nBearer abcdefghijklmnop\ncontact test@example.com\n13812345678\n110101199001011234`);
   for(const s of [secret,'abcdefghijklmnop','test@example.com','13812345678','110101199001011234'])assert(!out.includes(s));
 });
-test('HTTP MCP interoperates with the official SDK client and rejects writes / auth bypasses',async t=>{
+test('HTTP MCP interoperates with the official SDK client and rejects arbitrary writes / auth bypasses',async t=>{
   const x=await fixture(t),service=await startServer({store:x.store});
   t.after(()=>new Promise(r=>service.server.close(r)));
   const url=`http://127.0.0.1:${service.port}`;
@@ -90,7 +90,7 @@ test('HTTP MCP interoperates with the official SDK client and rejects writes / a
   assert.equal((await fetch(url+'/api/folders/add',{method:'POST',headers:{'Content-Type':'application/json','X-LocalReader-Token':service.adminToken,Origin:'https://evil.example'},body:'{}'})).status,403);
   const client=new Client({name:'test',version:'1.0'}),transport=new StreamableHTTPClientTransport(new URL(url+'/mcp'),{requestInit:{headers:{Authorization:'Bearer '+service.mcpToken}}});
   await client.connect(transport);t.after(()=>client.close());
-  const tools=await client.listTools();assert.equal(tools.tools.length,9);assert(tools.tools.every(t=>t.annotations.readOnlyHint && !t.annotations.destructiveHint));
+  const tools=await client.listTools();assert.equal(tools.tools.length,13);assert(tools.tools.every(t=>t.name==='apply_edit' ? !t.annotations.readOnlyHint && t.annotations.destructiveHint : t.annotations.readOnlyHint && !t.annotations.destructiveHint));
   const folders=await client.callTool({name:'list_folders',arguments:{}});assert.equal(folders.structuredContent.folders[0].id,x.folder.id);assert(!JSON.stringify(folders).includes(x.project));
   const result=await client.callTool({name:'read_file',arguments:{folderId:x.folder.id,path:'app.js'}});assert.equal(result.isError,undefined);assert.match(result.structuredContent.content,/login/);
   const denied=await client.callTool({name:'read_file',arguments:{folderId:x.folder.id,path:'../outside/secret.txt'}});assert.equal(denied.isError,true);

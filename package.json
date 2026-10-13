@@ -1,9 +1,9 @@
 {
   "name": "local-reader-mcp",
-  "version": "0.1.0-beta.1",
+  "version": "0.2.0-beta.1",
   "private": true,
   "type": "module",
-  "description": "A local, read-only folder MCP with a native macOS manager",
+  "description": "A local folder MCP with opt-in text editing and a native macOS manager",
   "engines": {
     "node": ">=24"
   },

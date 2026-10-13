@@ -7,18 +7,20 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { Store } from './store.js';
 import { Reader } from './reader.js';
+import { Editor } from './editor.js';
 import { makeMcp, readableError } from './mcp.js';
 
 const appDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 export async function startServer({ store = new Store(), reader, port = Number(process.env.LOCALREADER_PORT || 0), adminToken = process.env.LOCALREADER_ADMIN_TOKEN || crypto.randomBytes(32).toString('hex'), mcpToken = process.env.LOCALREADER_MCP_TOKEN || crypto.randomBytes(32).toString('hex') } = {}) {
   reader ||= new Reader(store);
+  const editor = new Editor(store);
   let activeMcp = 0;
   const equals = (a,b) => typeof a === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && crypto.timingSafeEqual(Buffer.from(a),Buffer.from(b));
   const json = (res, code, value) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(value)); };
   const body = async req => {
     if (!(req.headers['content-type'] || '').startsWith('application/json')) throw new Error('仅接受 JSON 请求。');
     let size=0, chunks=[];
-    for await (const c of req) { size+=c.length; if(size>100000) throw new Error('请求过大。'); chunks.push(c); }
+    for await (const c of req) { size+=c.length; if(size>3*1024*1024) throw new Error('请求超过 3 MiB 上限，请缩小编辑范围。'); chunks.push(c); }
     return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
   };
   const server = http.createServer(async (req,res) => {
@@ -30,7 +32,7 @@ export async function startServer({ store = new Store(), reader, port = Number(p
     if (origin && origin !== 'http://'+host) return json(res,403,{error:'跨站请求不被允许。'});
     const u = new URL(req.url,'http://'+host);
     try {
-      if (u.pathname === '/health' && req.method === 'GET') return json(res,200,{ok:true,version:'0.1.0-beta.1'});
+      if (u.pathname === '/health' && req.method === 'GET') return json(res,200,{ok:true,version:'0.2.0-beta.1'});
       if (u.pathname === '/mcp') {
         if (!equals(req.headers.authorization || '', 'Bearer '+mcpToken)) return json(res,401,{error:'未授权的 MCP 请求。'});
         if (req.method !== 'POST') { res.setHeader('Allow','POST'); return json(res,405,{error:'此服务使用无状态 MCP POST。'}); }
@@ -38,7 +40,7 @@ export async function startServer({ store = new Store(), reader, port = Number(p
         const parsed = await body(req);
         if (Array.isArray(parsed)) return json(res,400,{error:'不支持批量请求。'});
         activeMcp++;
-        const mcp = makeMcp(reader,store), transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+        const mcp = makeMcp(reader,store,editor), transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
         let closed=false;
         const close = async () => { if(closed)return; closed=true; activeMcp--; await transport.close().catch(()=>{}); await mcp.close().catch(()=>{}); };
         res.on('close',close);
@@ -56,6 +58,11 @@ export async function startServer({ store = new Store(), reader, port = Number(p
         if (u.pathname === '/api/folders/update') return json(res,200,{folder:store.update(a.id,a)});
         if (u.pathname === '/api/folders/remove') { store.remove(a.id); return json(res,200,{ok:true}); }
         if (u.pathname === '/api/pause') { store.pause(a.paused); return json(res,200,{ok:true}); }
+        if (u.pathname === '/api/changes') return json(res,200,editor.history(a.id));
+        if (u.pathname === '/api/restore') {
+          const preview = editor.prepareRestore({folderId:a.id,changeId:a.changeId});
+          return json(res,200,editor.apply({proposalId:preview.proposalId}));
+        }
         if (u.pathname === '/api/preview') {
           const start=Date.now();
           try { const result=await reader.listDirectory({folderId:a.id}); store.audit('local_preview',{folderId:a.id},'ok',Date.now()-start); return json(res,200,result); }
