@@ -1,31 +1,33 @@
-# 本地资料助手 · Local Reader MCP
+# 本地项目助手 · Local Project MCP
 
 让 ChatGPT 按需搜索和读取你主动授权的本地项目与资料，并在你为具体文件夹开启编辑后直接修改文本文件。Mac 原生管理窗口、菜单栏常驻、MCP 和 OpenAI Secure MCP Tunnel 集成。
 
-**[下载安装包](https://github.com/dudu555-djiao/local-reader-mcp/releases) · [完整配置教程](docs/QUICKSTART.zh-CN.md) · [常见问题](docs/TROUBLESHOOTING.zh-CN.md) · [隐私说明](PRIVACY.md)**
+**[下载安装包](https://github.com/dudu555-djiao/local-project-mcp/releases) · [完整配置教程](docs/QUICKSTART.zh-CN.md) · [常见问题](docs/TROUBLESHOOTING.zh-CN.md) · [隐私说明](PRIVACY.md)**
 
-> 当前版本为 **0.2.0-beta.1，macOS 14+ / Apple Silicon（M 系列）测试版**。未经过 Apple Developer ID 签名或公证。Windows、Intel Mac 尚无安装包。ChatGPT 网页连接要求你的账号具有自定义 MCP 和 Tunnel 访问权限，购买订阅不保证获得这些入口。没有相应权限时可使用本地预览、导出 Markdown，或接入支持 stdio 的本地 MCP 客户端。
+> 当前版本为 **0.2.0-beta.2，macOS 14+ / Apple Silicon（M 系列）测试版**。未经过 Apple Developer ID 签名或公证。Windows、Intel Mac 尚无安装包。ChatGPT 网页连接要求你的账号具有自定义 MCP 和 Tunnel 访问权限，购买订阅不保证获得这些入口。没有相应权限时可使用本地预览、导出 Markdown，或接入支持 stdio 的本地 MCP 客户端。
 
 ## 快速开始
 
-1. 从 **Releases** 下载 `LocalReader-0.2.0-beta.1-macos-arm64.zip`，解压后把“本地资料助手.app”拖入“应用程序”。解压目录有离线中文教程；Release 另提供 SHA256 校验文件。
+1. 从 **Releases** 下载 `LocalProject-0.2.0-beta.2-macos-arm64.zip`，解压后把“本地项目助手.app”拖入“应用程序”。解压目录有离线中文教程；Release 另提供 SHA256 校验文件。
 2. 打开软件，点击 **添加文件夹**。首次安装没有任何预授权目录；新加文件夹及从旧版升级的文件夹默认只读，编辑需要逐个开启。
 3. 点击 **连接 ChatGPT**，按向导创建自己的 Tunnel、生成只含 Tunnels Read + Use 权限的运行 API key，填入本机配置窗口。需要代理时填入自己的 HTTP 代理地址。
 4. 点击 **启动连接**。再去 ChatGPT 插件页面创建自定义 MCP，连接方式选 **Tunnel / 隧道**，身份验证明确选择 **No authentication / 无需身份验证**。
 5. 安装并在聊天中选择插件，发送下面的验证提示词。
 
 ```text
-请使用本地资料助手，先调用 server_info 检查服务，再调用 list_folders。
+请使用本地项目助手，先调用 server_info 检查服务，再调用 list_folders。
 只列出已授权文件夹，不读取正文。确认后我会指定需要分析的项目。
 ```
 
 安装后只使用“应用程序”里的 app。下载目录中解压出的同名副本可移到废纸篓，避免系统搜索出现多个入口；不要清理保存设置和修改备份的 Application Support 目录。
 
+从“本地资料助手 / Local Reader MCP”升级：退出旧版后安装“本地项目助手.app”，只保留“应用程序”里的新版。数据目录、应用标识和钥匙串服务名继续沿用原值，已有授权、设置、备份和已保存的运行密钥可继续使用，无需新建 Tunnel 或密钥。ChatGPT 中的个人插件名称不会随 app 自动改变，可在个人插件设置中手动改名并刷新工具列表。
+
 首次配置不需要写代码。[逐步教程](docs/QUICKSTART.zh-CN.md)解释 Tunnel ID、运行密钥、代理和网页插件每个字段。软件不会替你创建账户凭据，也不会调用模型推理 API；Tunnel 服务是否可用及费用以 OpenAI 当时政策为准。
 
 读取验证成功后，在本地为测试文件夹开启 **允许编辑**，让 ChatGPT 先调用 `prepare_edit` 返回修改预览，再调用 `apply_edit` 应用提案。升级后需要在 ChatGPT 刷新插件工具列表；旧聊天未显示新工具时新建聊天。完整步骤及恢复方法见[编辑教程](docs/QUICKSTART.zh-CN.md#8-开启编辑并完成第一次修改)。
 
-本版已用合成 UTF-8 文件完成网页读取、预览、保存、读回及本机恢复验收，范围和限制见[验证记录](docs/VERIFICATION.md)。
+0.2.0-beta.1 已用合成 UTF-8 文件完成网页读取、预览、保存、读回及本机恢复验收；本次 beta.2 更名的验证状态单独记录，范围和限制见[验证记录](docs/VERIFICATION.md)。
 
 ## 使用场景
 

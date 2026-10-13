@@ -8,11 +8,11 @@ for binary in node tunnel-client cloudflared; do
   [[ -x "$runtime/$binary" ]] || { echo 'Run python3 scripts/download-runtime.py first'; exit 1; }
 done
 [[ -d node_modules ]] || { echo 'Run npm ci first'; exit 1; }
-app="$root/build/本地资料助手.app"
+app="$root/build/本地项目助手.app"
 # Only generated build output is replaced; user settings are never read or copied.
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources/bin" "$app/Contents/Resources/service"
-swiftc -O -swift-version 5 -parse-as-library -file-prefix-map "$root=/src/local-reader-mcp" -debug-prefix-map "$root=/src/local-reader-mcp" native/App.swift native/TunnelHealth.swift -o "$app/Contents/MacOS/LocalReader" -framework Cocoa -framework WebKit -framework Security -framework PDFKit
+swiftc -O -swift-version 5 -parse-as-library -file-prefix-map "$root=/src/local-project-mcp" -debug-prefix-map "$root=/src/local-project-mcp" native/App.swift native/TunnelHealth.swift -o "$app/Contents/MacOS/LocalReader" -framework Cocoa -framework WebKit -framework Security -framework PDFKit
 cp -R src ui package.json package-lock.json "$app/Contents/Resources/service/"
 # Use production dependencies from a clean locked install, never copy arbitrary dev caches.
 cp package.json package-lock.json build/
@@ -34,13 +34,13 @@ cat > "$app/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleName</key><string>本地资料助手</string>
-<key>CFBundleDisplayName</key><string>本地资料助手</string>
+<key>CFBundleName</key><string>本地项目助手</string>
+<key>CFBundleDisplayName</key><string>本地项目助手</string>
 <key>CFBundleIdentifier</key><string>io.localreader.mcp</string>
 <key>CFBundleExecutable</key><string>LocalReader</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>0.2.0</string>
-<key>CFBundleVersion</key><string>2</string>
+<key>CFBundleVersion</key><string>3</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/>
@@ -53,4 +53,4 @@ PLIST
 for binary in node tunnel-client cloudflared; do codesign --force --sign - "$app/Contents/Resources/bin/$binary"; done
 codesign --force --sign - "$app"
 codesign --verify --deep --strict "$app"
-echo 'Built build/本地资料助手.app (ad-hoc signature; not notarized)'
+echo 'Built build/本地项目助手.app (ad-hoc signature; not notarized)'

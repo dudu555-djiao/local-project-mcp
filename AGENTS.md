@@ -1,6 +1,6 @@
 # Agent guide
 
-Local Reader MCP is a local folder reader with opt-in UTF-8 text editing and a native macOS manager. Each user connects their own ChatGPT plugin through their own OpenAI Tunnel. New folders and folders upgraded from older versions default to read-only.
+Local Project MCP is a local project assistant for reading and opt-in UTF-8 text editing, with a native macOS manager. Each user connects their own ChatGPT plugin through their own OpenAI Tunnel. New folders and folders upgraded from older versions default to read-only.
 
 ## Start and check
 
@@ -36,4 +36,4 @@ Local Reader MCP is a local folder reader with opt-in UTF-8 text editing and a n
 
 ## Current release
 
-The release line is `0.2.0-beta.1`. Web editing and native backup restoration have been verified with synthetic UTF-8 data; evidence and remaining platform limitations are in `docs/VERIFICATION.md`.
+The release line is `0.2.0-beta.2`. The public name is 本地项目助手 / Local Project MCP and the repository slug is `local-project-mcp`. Preserve compatibility identifiers: `LocalReaderMCP` app data, `io.localreader.mcp` bundle ID, `io.localreader.mcp.tunnel` Keychain service, `LocalReader` internal executable, and `LOCALREADER_*` environment variables and existing headers. Do not rename them as a cosmetic cleanup. Web editing and native backup restoration were verified on beta.1 with synthetic UTF-8 data; beta.2 checks are recorded separately in `docs/VERIFICATION.md`.

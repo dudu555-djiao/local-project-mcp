@@ -32,7 +32,7 @@ export async function startServer({ store = new Store(), reader, port = Number(p
     if (origin && origin !== 'http://'+host) return json(res,403,{error:'跨站请求不被允许。'});
     const u = new URL(req.url,'http://'+host);
     try {
-      if (u.pathname === '/health' && req.method === 'GET') return json(res,200,{ok:true,version:'0.2.0-beta.1'});
+      if (u.pathname === '/health' && req.method === 'GET') return json(res,200,{ok:true,version:'0.2.0-beta.2'});
       if (u.pathname === '/mcp') {
         if (!equals(req.headers.authorization || '', 'Bearer '+mcpToken)) return json(res,401,{error:'未授权的 MCP 请求。'});
         if (req.method !== 'POST') { res.setHeader('Allow','POST'); return json(res,405,{error:'此服务使用无状态 MCP POST。'}); }

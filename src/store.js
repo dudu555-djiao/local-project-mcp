@@ -54,7 +54,7 @@ export class Store {
   }
   folder(id) {
     const c = this.load();
-    if (c.paused) throw new Error('本地读取已暂停，请在本地资料助手中恢复。');
+    if (c.paused) throw new Error('本地读取已暂停，请在本地项目助手中恢复。');
     const f = c.folders.find(f => f.id === id && f.enabled);
     if (!f) throw new Error('文件夹未授权、已停用或已移除。先调用 list_folders 获取可用 ID。');
     if (fs.realpathSync(f.path) !== f.path) throw new Error('文件夹路径已变化，请移除后重新添加。');

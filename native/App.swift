@@ -60,23 +60,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         web = WKWebView(frame:NSRect(x:0,y:0,width:1120,height:780),configuration:config);web.navigationDelegate=self
         web.autoresizingMask=[.width,.height]
         window = NSWindow(contentRect:NSRect(x:0,y:0,width:1120,height:780),styleMask:[.titled,.closable,.miniaturizable,.resizable],backing:.buffered,defer:false)
-        window.title="本地资料助手";window.minSize=NSSize(width:950,height:650);window.center();window.delegate=self
+        window.title="本地项目助手";window.minSize=NSSize(width:950,height:650);window.center();window.delegate=self
         let container=NSView(frame:NSRect(x:0,y:0,width:1120,height:780));window.contentView=container
         web.translatesAutoresizingMaskIntoConstraints=false;container.addSubview(web)
         NSLayoutConstraint.activate([web.leadingAnchor.constraint(equalTo:container.leadingAnchor),web.trailingAnchor.constraint(equalTo:container.trailingAnchor),web.topAnchor.constraint(equalTo:container.topAnchor),web.bottomAnchor.constraint(equalTo:container.bottomAnchor)])
-        loadingLabel=NSTextField(labelWithString:"正在启动本地资料助手…");loadingLabel.translatesAutoresizingMaskIntoConstraints=false;container.addSubview(loadingLabel)
+        loadingLabel=NSTextField(labelWithString:"正在启动本地项目助手…");loadingLabel.translatesAutoresizingMaskIntoConstraints=false;container.addSubview(loadingLabel)
         loadingSpinner=NSProgressIndicator();loadingSpinner.style = .spinning;loadingSpinner.translatesAutoresizingMaskIntoConstraints=false;container.addSubview(loadingSpinner);loadingSpinner.startAnimation(nil)
         NSLayoutConstraint.activate([loadingLabel.centerXAnchor.constraint(equalTo:container.centerXAnchor),loadingLabel.centerYAnchor.constraint(equalTo:container.centerYAnchor),loadingSpinner.centerXAnchor.constraint(equalTo:container.centerXAnchor),loadingSpinner.bottomAnchor.constraint(equalTo:loadingLabel.topAnchor,constant:-16)])
         window.setFrameAutosaveName("LocalReaderMainWindow")
         item = NSStatusBar.system.statusItem(withLength:NSStatusItem.squareLength)
-        item.button?.image=NSImage(systemSymbolName:"folder.badge.gearshape",accessibilityDescription:"本地资料助手")
-        let menu=NSMenu();menu.addItem(withTitle:"打开本地资料助手",action:#selector(showWindow),keyEquivalent:"").target=self
+        item.button?.image=NSImage(systemSymbolName:"folder.badge.gearshape",accessibilityDescription:"本地项目助手")
+        let menu=NSMenu();menu.addItem(withTitle:"打开本地项目助手",action:#selector(showWindow),keyEquivalent:"").target=self
         menu.addItem(withTitle:"暂停 / 恢复全部访问",action:#selector(togglePause),keyEquivalent:"").target=self
         menu.addItem(NSMenuItem.separator());menu.addItem(withTitle:"退出",action:#selector(quit),keyEquivalent:"q").target=self;item.menu=menu
         let mainMenu=NSMenu(), appMenu=NSMenu(), root=NSMenuItem();root.submenu=appMenu
-        appMenu.addItem(withTitle:"关于本地资料助手",action:#selector(about),keyEquivalent:"").target=self
+        appMenu.addItem(withTitle:"关于本地项目助手",action:#selector(about),keyEquivalent:"").target=self
         appMenu.addItem(withTitle:"显示窗口",action:#selector(showWindow),keyEquivalent:"0").target=self
-        appMenu.addItem(NSMenuItem.separator());appMenu.addItem(withTitle:"退出本地资料助手",action:#selector(quit),keyEquivalent:"q").target=self
+        appMenu.addItem(NSMenuItem.separator());appMenu.addItem(withTitle:"退出本地项目助手",action:#selector(quit),keyEquivalent:"q").target=self
         mainMenu.addItem(root)
         let edit=NSMenu(title:"编辑"), editItem=NSMenuItem(title:"编辑",action:nil,keyEquivalent:"");editItem.submenu=edit
         edit.addItem(withTitle:"复制",action:#selector(NSText.copy(_:)),keyEquivalent:"c");edit.addItem(withTitle:"粘贴",action:#selector(NSText.paste(_:)),keyEquivalent:"v");edit.addItem(withTitle:"剪切",action:#selector(NSText.cut(_:)),keyEquivalent:"x");edit.addItem(withTitle:"全选",action:#selector(NSText.selectAll(_:)),keyEquivalent:"a");mainMenu.addItem(editItem);NSApp.mainMenu=mainMenu
@@ -87,7 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
     }
     @objc func showWindow(){window?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)}
     @objc func quit(){NSApp.terminate(nil)}
-    @objc func about(){let a=NSAlert();a.messageText="本地资料助手 0.2.0-beta.1";a.informativeText="默认只读，按项目授权编辑的资料 MCP。\n支持搜索、文档读取、修改预览、文件编辑、本地备份恢复和 OpenAI Tunnel 连接。\n关闭窗口后仍在菜单栏运行；退出会停止连接。";a.runModal()}
+    @objc func about(){let a=NSAlert();a.messageText="本地项目助手 0.2.0-beta.2";a.informativeText="默认只读，按项目授权编辑的资料 MCP。\n支持搜索、文档读取、修改预览、文件编辑、本地备份恢复和 OpenAI Tunnel 连接。\n关闭窗口后仍在菜单栏运行；退出会停止连接。";a.runModal()}
     func windowShouldClose(_ sender:NSWindow)->Bool{sender.orderOut(nil);return false}
     func applicationShouldTerminateAfterLastWindowClosed(_ sender:NSApplication)->Bool{return false}
     func applicationWillTerminate(_ notification:Notification){quitting=true;healthTimer?.invalidate();stopTunnel();backend?.terminate();if let b=backend,b.isRunning { b.waitUntilExit() }}

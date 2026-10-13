@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>本地资料助手</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>本地项目助手</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
 <body>
   <aside class="sidebar">
-    <div class="brand"><span class="brand-mark">L</span><div>本地资料助手<small>LOCAL READER</small></div></div>
+    <div class="brand"><span class="brand-mark">L</span><div>本地项目助手<small>LOCAL PROJECT</small></div></div>
     <div class="nav-label">工作空间</div>
     <nav>
       <button class="nav active" data-tab="folders"><span>▦</span>资料文件夹<i id="folderBadge">0</i></button>
@@ -11,7 +11,7 @@
       <button class="nav" data-tab="activity"><span>≡</span>访问记录</button>
       <button class="nav" data-tab="guide"><span>?</span>使用指南</button>
     </nav>
-    <div class="sidebar-bottom"><div class="readonly-pill"><span class="dot"></span><span id="accessMode">默认只读访问</span></div><p>你选择资料范围，<br>ChatGPT 按需读取与编辑。</p><small>LOCAL READER · 0.2 BETA</small></div>
+    <div class="sidebar-bottom"><div class="readonly-pill"><span class="dot"></span><span id="accessMode">默认只读访问</span></div><p>你选择资料范围，<br>ChatGPT 按需读取与编辑。</p><small>LOCAL PROJECT · 0.2 BETA</small></div>
   </aside>
   <main>
     <header><div class="breadcrumb">我的电脑 <span>/</span> <b id="breadcrumb">资料文件夹</b></div><div class="header-status"><span class="dot" id="localDot"></span><span id="localStatus">正在启动…</span></div></header>
@@ -43,7 +43,7 @@
     <section class="page hidden" id="guidePage">
       <div class="page-heading"><div><p class="eyebrow">A SIMPLE WORKFLOW</p><h1>资料在本地，读写在 Chat。</h1><p class="subtitle">网页端 GPT 可调用编辑工具直接修改已授权项目，无需再交给 Codex 执行。</p></div></div>
       <div class="guide-grid"><article><span>1</span><h3>按项目允许编辑</h3><p>添加项目并打开访问开关。点击“允许编辑”，在 Mac 确认窗口核对项目路径。新添加的文件夹始终默认只读。</p></article><article><span>2</span><h3>读取并预览修改</h3><p>在 ChatGPT 中选择本地资料插件。让 GPT 先读文件，再调用 prepare_edit 生成具体修改预览，核对路径与差异。</p></article><article><span>3</span><h3>应用并读回验证</h3><p>确认修改后，让 GPT 调用 apply_edit 写入本机，再读回检查结果。文件已变化时会拒绝应用，需重新读取和预览。</p></article></div>
-      <div class="prompt-card"><h2>试试这样提问</h2><p id="samplePrompt">请使用本地资料助手，先调用 server_info 和 list_folders，读取目标项目的相关文件。针对我的需求调用 prepare_edit，并展示修改路径、预览差异与 proposalId。等我确认后调用 apply_edit，再读回文件验证。若项目未允许编辑或文件发生冲突，停止写入并说明原因。</p><button class="secondary" id="copyPrompt">复制提问示例</button></div>
+      <div class="prompt-card"><h2>试试这样提问</h2><p id="samplePrompt">请使用本地项目助手，先调用 server_info 和 list_folders，读取目标项目的相关文件。针对我的需求调用 prepare_edit，并展示修改路径、预览差异与 proposalId。等我确认后调用 apply_edit，再读回文件验证。若项目未允许编辑或文件发生冲突，停止写入并说明原因。</p><button class="secondary" id="copyPrompt">复制提问示例</button></div>
       <div class="formats"><h2>编辑与恢复</h2><p>支持 UTF-8 文本和源码的局部替换、新建文件。读取内容可能已脱敏，不能将脱敏后的全文覆盖回原文件。PDF、Word、RTF、SQLite 仍只读；本版不提供删除文件、任意终端执行或 SQL 写入。</p><p>每次应用修改都会记录结果，并把修改前内容保存在本机私有备份目录。点击项目的“修改历史”可查看和确认恢复；新建文件没有旧内容，本版不通过恢复删除文件。备份含原始内容，请保留并保护本机账户；达到备份上限后会拒绝继续修改。</p><p>暂停、停用或移除项目会阻止新的访问与修改，不能撤回已经传给 ChatGPT 的内容。关闭窗口仍在菜单栏运行，退出应用或电脑休眠后连接停止。</p><h2>这一版支持读取什么</h2><p>源码、文本、Markdown、JSON、CSV、日志、可选文本 PDF、Word DOCX / RTF、SQLite 和本地 Git 摘要。</p><p>图片、音视频、扫描版 PDF 的 OCR、Excel 工作簿和其他数据库格式暂不支持；请另行上传或先导出文本。大型文件、搜索扫描和导出均有上限，返回结果会说明截断情况。</p><p>“导出资料”生成经过过滤的 Markdown 快照，方便在连接不可用时手动上传；它不会包含所有格式或保证模型完整阅读每个文件。</p></div>
     </section>
     <footer>默认只读 · 按项目授权编辑 · 先预览，再应用并验证</footer>

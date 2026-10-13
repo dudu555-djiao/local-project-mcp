@@ -46,7 +46,7 @@ export class Editor {
   }
   grant(folderId) {
     const root = this.store.folder(folderId), c = this.store.load();
-    if (root.editable !== true) throw new Error('此文件夹为只读。请先在本地资料助手中开启“允许编辑”。');
+    if (root.editable !== true) throw new Error('此文件夹为只读。请先在本地项目助手中开启“允许编辑”。');
     return {root, epoch:(c.accessEpoch || '') + ':' + (root.editEpoch || '')};
   }
   parents(root, relative, allowMissing) {
