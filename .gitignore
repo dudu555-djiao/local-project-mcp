@@ -4,6 +4,7 @@ node_modules/
 .env.*
 !.env.example
 *.log
+*.log.*
 *.jsonl
 *.jsonl.*
 *.db
@@ -16,6 +17,11 @@ node_modules/
 settings.json
 connection.json
 tunnel-health.url
+LocalReaderMCP/
+editing/
+proposals/
+backups/
+*.bin
 .cache/
 work/
 build/
