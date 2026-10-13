@@ -31,7 +31,7 @@ macOS 可能把生成目录和安装包解压目录里的 app 也列入系统搜
 
 ## 名称与升级兼容
 
-从 0.2.0-beta.2 起，公开产品名为“本地项目助手 / Local Project MCP”，仓库为 `local-project-mcp`，安装应用为“本地项目助手.app”，下载包为 `LocalProject-0.2.0-beta.2-macos-arm64.zip`。
+从 0.2.0-beta.2 起，公开产品名为“本地项目助手 / Local Project MCP”，仓库为 `local-project-mcp`，构建产物为“本地项目助手.app”，打包文件名为 `LocalProject-0.2.0-beta.2-macos-arm64.zip`。
 
 为保留既有用户配置和连接，以下内部标识不随品牌名称改变：`LocalReaderMCP` 数据目录、`io.localreader.mcp` 应用 bundle ID、`io.localreader.mcp.tunnel` 钥匙串服务名、`LocalReader` 内部可执行文件、`LOCALREADER_*` 环境变量及现有令牌请求头。它们是升级兼容接口，不是遗漏的展示文案。不要因为改名建立新的空白配置目录或迁移、复制用户凭据。
 

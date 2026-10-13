@@ -1,8 +1,8 @@
 # 更新记录
 
-## 0.2.0-beta.2
+## 0.2.0-beta.2（源码更新，尚未发布安装包）
 
-产品更名为“本地项目助手 / Local Project MCP”，GitHub 仓库更名为 `local-project-mcp`，以体现按授权读取、预览、编辑与恢复本地项目文件的能力。安装应用改为“本地项目助手.app”，下载包使用 `LocalProject` 前缀，教程和公开链接同步更新。
+产品更名为“本地项目助手 / Local Project MCP”，GitHub 仓库更名为 `local-project-mcp`，以体现按授权读取、预览、编辑与恢复本地项目文件的能力。构建产物名称准备为“本地项目助手.app”及 `LocalProject` 前缀，教程和公开链接同步更新；现有 beta.1 安装包保留，不要求重新安装。
 
 保留 `LocalReaderMCP` 数据目录、`io.localreader.mcp` 应用标识、原钥匙串服务及内部兼容接口，继续沿用已有授权、连接设置、备份和已保存的运行密钥。升级时退出旧版并只保留新版 app；ChatGPT 个人插件可手动改名并刷新，无需新建 Tunnel 或密钥。编辑权限和工具边界不因更名扩大。本次更名的检查与 beta.1 网页编辑验收分别记录，见 [验证说明](docs/VERIFICATION.md)。
 
