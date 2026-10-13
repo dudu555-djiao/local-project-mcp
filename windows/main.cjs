@@ -18,6 +18,7 @@ const adminToken = crypto.randomBytes(32).toString('hex'), mcpToken = crypto.ran
 let mainWindow, formWindow, formInfo, tray, backend, tunnel, serviceURL, diagnosticsURL, healthTimer, healthBusy = false, quitting = false;
 let config = {tunnelId:'',organization:'',proxy:'',rememberKey:false}, runtimeKey = '';
 let connection = {state:'unconfigured',detail:''};
+let startupStage = 'initializing';
 
 function atomicWrite(file, bytes) {
   const temporary = file + '.' + crypto.randomUUID() + '.tmp';
@@ -205,7 +206,7 @@ async function handleAction(message) {
 function startBackend() {
   return new Promise((resolve,reject) => {
     const env = {...childEnvironment(),LOCALREADER_DATA_DIR:profile,LOCALREADER_ADMIN_TOKEN:adminToken,LOCALREADER_MCP_TOKEN:mcpToken,LOCALREADER_PORT:'0',LOCALREADER_GIT:path.join(runtimeDir,'git','cmd','git.exe')};
-    backend = spawn(path.join(runtimeDir,'node.exe'),[path.join(serviceDir,'src','server.js')],{cwd:serviceDir,env,windowsHide:true,stdio:['ignore','pipe','ignore']});
+    backend = spawn(path.join(runtimeDir,'node.exe'),[path.join(serviceDir,'src','server.js')],{cwd:serviceDir,env,windowsHide:true,stdio:['ignore','pipe',process.env.LOCALREADER_STARTUP_DIAGNOSTICS === '1' ? 'inherit' : 'ignore']});
     let output = '', settled = false;
     const timer = setTimeout(() => { if (!settled) reject(new Error('本地服务启动超时。')); },15000);
     backend.stdout.on('data',chunk => {
@@ -236,12 +237,14 @@ else {
     Promise.all([killChild(tunnel),killChild(backend)]).finally(() => { runtimeKey = ''; app.exit(0); });
   });
   app.whenReady().then(async () => {
+    startupStage = 'profile permissions';
     prepareProfile();
     if (fs.existsSync(configPath)) config = validateConnection(JSON.parse(fs.readFileSync(configPath,'utf8')));
     connection = {state:config.tunnelId ? 'configured' : 'unconfigured',detail:''};
     session.defaultSession.setPermissionRequestHandler((_contents,_permission,callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
-    await startBackend();
+    startupStage = 'backend'; await startBackend();
+    startupStage = 'desktop window';
     mainWindow = new BrowserWindow({width:1280,height:880,minWidth:980,minHeight:650,autoHideMenuBar:true,icon:path.join(__dirname,'assets','icon.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
     secureWindow(mainWindow);
     mainWindow.on('close',event => {if (!quitting) {event.preventDefault(); mainWindow.hide();}});
@@ -276,7 +279,8 @@ else {
     tray.on('double-click',() => {mainWindow.show(); mainWindow.focus();});
     await mainWindow.loadURL(serviceURL+'/#token='+adminToken);
     status(); healthTimer = setInterval(checkHealth,3000);
-  }).catch(async () => {
+  }).catch(async error => {
+    if (process.env.LOCALREADER_STARTUP_DIAGNOSTICS === '1') console.error('STARTUP:',startupStage,error.code || error.name);
     await dialog.showMessageBox({type:'error',title:'启动失败',message:'本地项目助手无法启动。',detail:'请检查安装是否完整、当前用户资料目录是否可写，并确认正在本机磁盘运行。不要关闭系统安全保护。',buttons:['退出']});
     app.quit();
   });

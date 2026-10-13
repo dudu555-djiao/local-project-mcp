@@ -24,9 +24,11 @@ const { execFileSync } = require('node:child_process');
   assert.match(execFileSync(path.join(runtime,'node.exe'),['--version'],{encoding:'utf8'}),/v24\.16\.0/);
   assert.match(execFileSync(path.join(runtime,'git','cmd','git.exe'),['--version'],{encoding:'utf8'}),/git version/);
   execFileSync(path.join(runtime,'tunnel-client.exe'),['help','quickstart'],{stdio:'pipe',timeout:10000});
+  execFileSync(path.join(runtime,'node.exe'),['--input-type=module','-e','await import("./src/server.js"); console.log("Packaged backend imports passed");'],{cwd:path.join(unpacked,'resources','service'),stdio:'inherit',timeout:10000});
   let desktop,client;
   try {
-    desktop = await _electron.launch({executablePath:path.join(unpacked,'本地项目助手.exe'),env:{...process.env,LOCALREADER_DATA_DIR:profile},timeout:30000});
+    desktop = await _electron.launch({executablePath:path.join(unpacked,'本地项目助手.exe'),env:{...process.env,LOCALREADER_DATA_DIR:profile,LOCALREADER_STARTUP_DIAGNOSTICS:'1'},timeout:30000});
+    desktop.process().stderr.on('data',chunk => process.stderr.write(chunk));
     const page = await desktop.firstWindow();
     await page.waitForURL('http://127.0.0.1:*/**');
     await page.locator('#localStatus').filter({hasText:'本地服务运行中'}).waitFor();
