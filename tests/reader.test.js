@@ -63,7 +63,7 @@ test('SQLite queries are read-only, constrained to tables, paginated, and mask c
   const after=crypto.createHash('sha256').update(await fs.readFile(p)).digest('hex');assert.equal(before,after);
 });
 test('local Git summary does not modify source or the index',async t=>{
-  const x=await fixture(t),nullDevice=process.platform==='win32'?'NUL':os.devNull;const git=args=>execFileSync(process.env.LOCALREADER_GIT || 'git',args,{cwd:x.project,env:{...process.env,GIT_CONFIG_GLOBAL:nullDevice,GIT_CONFIG_SYSTEM:nullDevice},stdio:'pipe',windowsHide:true});
+  const x=await fixture(t),emptyConfig=path.join(x.dir,'empty-git.config');await fs.writeFile(emptyConfig,'');const git=args=>execFileSync(process.env.LOCALREADER_GIT || 'git',args,{cwd:x.project,env:{...process.env,GIT_CONFIG_GLOBAL:emptyConfig,GIT_CONFIG_SYSTEM:emptyConfig},stdio:'pipe',windowsHide:true});
   git(['init']);git(['add','README.md']);git(['-c','user.name=Test','-c','user.email=test@example.org','commit','-m','initial']);
   const indexBefore=await fs.readFile(path.join(x.project,'.git/index'));
   const out=await x.reader.gitSummary({folderId:x.folder.id,limit:5});assert.match(out.commits,/initial/);assert.match(out.status,/app.js/);

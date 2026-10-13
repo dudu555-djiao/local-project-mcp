@@ -57,7 +57,7 @@ test('legacy grants overlapping private editing storage cannot expose proposals 
   // Simulate files written by an older release before overlap checks existed.
   // Ancestor, exact private root and nested private folders must all be rejected.
   for(const root of [x.dir,x.store.dir,path.join(x.editor.area,'proposals')]){
-    const legacy={version:1,paused:false,folders:[{id:'legacy-fixture',name:'Legacy synthetic grant',path:root,enabled:true,editable:true}]};
+    const legacy={version:1,paused:false,folders:[{id:'legacy-fixture',name:'Legacy synthetic grant',path:fs.realpathSync.native(root),enabled:true,editable:true}]};
     fs.writeFileSync(x.store.file,JSON.stringify(legacy),{mode:0o600});
     const listed=x.reader.listFolders();assert.deepEqual(listed.folders,[]);assert.equal(listed.unavailableCount,1);
     assert.throws(()=>x.store.folder('legacy-fixture'),/私有设置或备份/);

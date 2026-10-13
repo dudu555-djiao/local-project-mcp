@@ -163,10 +163,6 @@ export class Reader {
   }
   async gitSummary({ folderId, limit = 10 }) {
     const root = this.store.folder(folderId);
-    const nullDevice = process.platform === 'win32' ? 'NUL' : '/dev/null';
-    const env = { ...process.env, GIT_DIR: path.join(root.path,'.git'), GIT_WORK_TREE: root.path, GIT_OPTIONAL_LOCKS: '0', GIT_CONFIG_GLOBAL: nullDevice, GIT_CONFIG_SYSTEM: nullDevice, GIT_TERMINAL_PROMPT: '0', GIT_PAGER: 'cat' };
-    const opts = { cwd: root.path, env, timeout: 5000, maxBuffer: 300000, encoding: 'utf8', windowsHide:true };
-    const prefix = ['--no-pager', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath='+nullDevice, '-c', 'diff.external='];
     const gitBinary = process.env.LOCALREADER_GIT || (process.platform === 'win32' ? 'git.exe' : '/usr/bin/git');
     // Reject worktrees referring to a Git database outside the authorized root.
     const git = await this.resolve(folderId, '');
@@ -175,6 +171,15 @@ export class Reader {
     for (const p of ['commondir','objects/info/alternates']) {
       if (await fs.lstat(path.join(root.path,'.git',p)).catch(()=>null)) throw new Error('Git 仓库引用了外部对象目录，暂不读取。');
     }
+    // Git for Windows rejects device paths such as NUL in config settings.
+    // Use actual private, empty files/directories on both platforms instead.
+    const scratch = await fs.mkdtemp(path.join(this.store.dir,'git-read-'));
+    try {
+    const empty = path.join(scratch,'empty.config'), hooks = path.join(scratch,'hooks');
+    await fs.writeFile(empty,'',{mode:0o600,flag:'wx'}); await fs.mkdir(hooks,{mode:0o700});
+    const env = { ...process.env, GIT_DIR:path.join(root.path,'.git'), GIT_WORK_TREE:root.path, GIT_OPTIONAL_LOCKS:'0', GIT_CONFIG_GLOBAL:empty, GIT_CONFIG_SYSTEM:empty, GIT_CONFIG_NOSYSTEM:'1', GIT_TERMINAL_PROMPT:'0', GIT_PAGER:'cat' };
+    const opts = {cwd:root.path,env,timeout:5000,maxBuffer:300000,encoding:'utf8',windowsHide:true};
+    const prefix = ['--no-pager','-c','core.fsmonitor=false','-c','core.hooksPath='+hooks,'-c','diff.external='];
     const [status, log, diff] = await Promise.all([
       run(gitBinary, [...prefix, 'status', '--short', '--untracked-files=normal'], opts),
       run(gitBinary, [...prefix, 'log', `-${limit}`, '--format=%h %ad %s', '--date=short'], opts).catch(() => ({stdout: '暂无提交记录'})),
@@ -182,6 +187,7 @@ export class Reader {
     ]);
     this.store.folder(folderId);
     return { status: redact(status.stdout.slice(0, 16000)), commits: redact(log.stdout.slice(0, 16000)), changeSummary: redact(diff.stdout.slice(0,16000)), note: '只读取本地 Git；未运行外部 diff、fsmonitor 或 hooks。' };
+    } finally { await fs.rm(scratch,{recursive:true,force:true}); }
   }
   async database({ folderId, path: relative, table, limit = 20, offset = 0 }, rows = false) {
     const r = await this.resolve(folderId, relative);
