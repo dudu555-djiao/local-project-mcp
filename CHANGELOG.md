@@ -1,6 +1,10 @@
 # 更新记录
 
-## 0.2.0-beta.2（源码更新，尚未发布安装包）
+## 0.2.0-beta.2（新增 Windows x64 测试版）
+
+新增 Windows 桌面客户端和 NSIS 安装包，复用现有管理界面及 13 个 MCP 工具；支持文件夹授权、编辑预览、文本修改、新建、备份恢复、访问记录、导出、系统托盘和官方 Tunnel 连接管理。密钥使用 Windows DPAPI 为当前用户加密保存，默认不保存；本机数据与 Mac 分开。
+
+适配 Windows 路径、设备名 / ADS 拒绝、私有目录 ACL、进程退出和内置 Git；提供 PDF.js、DOCX XML 和 RTF 正文提取。安装包附带固定校验的 Node / Tunnel / MinGit 和生产依赖，无需另装开发环境。Windows 35 项测试与安装后的桌面验收通过，真实 ChatGPT Tunnel 的 Windows 用户端验证仍需按教程完成，见 [验证记录](docs/VERIFICATION.md)。
 
 产品更名为“本地项目助手 / Local Project MCP”，GitHub 仓库更名为 `local-project-mcp`，以体现按授权读取、预览、编辑与恢复本地项目文件的能力。构建产物名称准备为“本地项目助手.app”及 `LocalProject` 前缀，教程和公开链接同步更新；现有 beta.1 安装包保留，不要求重新安装。
 

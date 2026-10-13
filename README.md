@@ -4,7 +4,7 @@
 
 **[下载安装包](https://github.com/dudu555-djiao/local-project-mcp/releases) · [完整配置教程](docs/QUICKSTART.zh-CN.md) · [常见问题](docs/TROUBLESHOOTING.zh-CN.md) · [隐私说明](PRIVACY.md)**
 
-> Mac 安装包为 **0.2.0-beta.1，macOS 14+ / Apple Silicon（M 系列）**；新增 **0.2.0-beta.2 Windows 10 / 11 x64** 客户端与安装包构建流程。安装包见 Releases，验证范围见[验证记录](docs/VERIFICATION.md)。Mac 版未经过 Apple Developer ID 签名或公证，Windows 版未购买代码签名证书；Intel Mac 和 Windows ARM64 原生安装包尚未提供。ChatGPT 网页连接要求账号具有自定义 MCP 和 Tunnel 权限，购买订阅不保证获得这些入口。
+> Mac 安装包为 **0.2.0-beta.1，macOS 14+ / Apple Silicon（M 系列）**；Windows 安装包为 **0.2.0-beta.2，Windows 10 / 11 x64 测试版**。安装包见 Releases，Windows 安装及桌面自动化验收已通过，具体环境和范围见[验证记录](docs/VERIFICATION.md)。Mac 版未经过 Apple Developer ID 签名或公证，Windows 版未购买代码签名证书；Intel Mac 和 Windows ARM64 原生安装包尚未提供。ChatGPT 网页连接要求账号具有自定义 MCP 和 Tunnel 权限，购买订阅不保证获得这些入口。
 
 Windows 用户请按 [Windows 中文安装教程](docs/QUICKSTART.windows.zh-CN.md) 下载 `LocalProject-0.2.0-beta.2-windows-x64-setup.exe`；下方拖入“应用程序”的操作适用于 Mac。
 
@@ -29,7 +29,7 @@ beta.2 新增 Windows 客户端，现有 Mac beta.1 安装包保留，Mac 用户
 
 读取验证成功后，在本地为测试文件夹开启 **允许编辑**，让 ChatGPT 先调用 `prepare_edit` 返回修改预览，再调用 `apply_edit` 应用提案。升级后需要在 ChatGPT 刷新插件工具列表；旧聊天未显示新工具时新建聊天。完整步骤及恢复方法见[编辑教程](docs/QUICKSTART.zh-CN.md#8-开启编辑并完成第一次修改)。
 
-0.2.0-beta.1 已用合成 UTF-8 文件完成网页读取、预览、保存、读回及本机恢复验收；本次 beta.2 更名的验证状态单独记录，范围和限制见[验证记录](docs/VERIFICATION.md)。
+Mac 0.2.0-beta.1 已用合成 UTF-8 文件完成网页读取、预览、保存、读回及本机恢复验收。Windows beta.2 已通过 Windows 安装及桌面 / SDK 自动化验收；尚未将其描述为 Windows 的真实 ChatGPT 网页验收。范围和限制见[验证记录](docs/VERIFICATION.md)。
 
 ## 使用场景
 

@@ -1,5 +1,17 @@
 # 发布验证
 
+## 0.2.0-beta.2 Windows x64 安装包
+
+2026-10-14，安装包构建源码为 `5494b5235d03d925e0cbc3d609d8307141496c1c`。以下验证使用合成文件和一次性用户配置，不读取真实项目或凭据。
+
+- [Windows 构建与安装验收](https://github.com/dudu555-djiao/local-project-mcp/actions/runs/38428939153) 在 GitHub Windows Server 2022 x64 runner 全部通过。35 项 Node 测试包括真实 HTTP / stdio SDK 读写链、路径限制、故障恢复及 PDF / DOCX / RTF 正文解析。
+- 实际生成 NSIS setup.exe，在临时目录执行安装，再启动安装后的桌面程序；检查安装后内置 Node、Tunnel 与 MinGit 可以运行，本地服务的生产依赖可加载。
+- 桌面验收覆盖：添加中文及空格路径的测试目录、默认只读、取消与确认编辑授权、13 个工具发现、读取 → 预览 → 应用 → 磁盘核对、桌面修改历史恢复、PDF / DOCX / 中文 RTF 读取、内置 Git 摘要、Markdown 导出、暂停 / 恢复 / 移除授权、运行密钥 DPAPI 加密保存。合成密钥不进入明文连接 JSON，测试目录授权在结束前移除。
+- [Mac 回归检查](https://github.com/dudu555-djiao/local-project-mcp/actions/runs/38428939092) 通过同版本 35 项 Node 测试、6 项 Swift 连接检查和公开文件检查。未替换用户已安装的 Mac app 或修改其设置、钥匙串和备份。
+- 固定官方 Node 24.16.0、Tunnel 0.0.15 和 MinGit 2.56.0.windows.2 下载 SHA256 均校验后打包。安装包不带任何用户资料、授权目录或真实连接凭据。
+
+范围限制：这是 Windows x64 测试版，安装 / 桌面自动化运行在 Windows Server 2022 runner，未逐一覆盖 Windows 10 / 11 各发行版本和 Windows ARM64。没有使用真实 OpenAI key，也没有进行 Windows 电脑 → 个人 Tunnel → ChatGPT 网页模型的新一次端到端验收；用户应按 Windows 教程完成自己的真实读取验证。现有 beta.1 Mac 网页验收不能作为本次 Windows 网页验收。Windows 安装包未购买代码签名证书，复杂文档布局不保证与 Mac 提取一致。
+
 ## 0.2.0-beta.2 更名检查
 
 产品名改为“本地项目助手 / Local Project MCP”，仓库与源码名称同步更新，打包脚本采用新名称。更名继续保留原有数据目录、bundle ID、钥匙串服务名和内部兼容接口；不扩大读取或编辑权限。
