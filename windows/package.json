@@ -25,6 +25,7 @@
     "files": ["main.cjs", "preload.cjs", "form-preload.cjs", "form.html", "form.js", "host-utils.cjs", "assets/tray.png", "assets/icon.ico", "package.json"],
     "extraResources": [
       {"from": "../build/windows-service", "to": "service", "filter": ["**/*"]},
+      {"from": "../build/windows-service/node_modules", "to": "service/node_modules", "filter": ["**/*"]},
       {"from": "../.cache/windows-runtime", "to": "runtime", "filter": ["**/*"]},
       {"from": "../docs", "to": "docs", "filter": ["*.md"]},
       {"from": "../LICENSE", "to": "licenses/LICENSE"},
